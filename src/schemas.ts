@@ -5,8 +5,27 @@ export const AgentStatus = z.object({
   summary: z.string().describe("At most 15 lines: what you did and how you verified it"),
   filesChanged: z.array(z.string()),
   concerns: z.array(z.string()).describe("Anything the orchestrator should know; empty if none"),
+  packages: z.array(z.object({
+    name: z.string().describe("npm package name, e.g. react-leaflet"),
+    version: z.string().optional().describe("exact version if you know one"),
+    why: z.string().describe("what you need it for and why the installed stack can't do it"),
+  })).optional().describe("Developers only: npm packages you need installed. The architect decides and you continue with the answer"),
 });
 export type AgentStatus = z.infer<typeof AgentStatus>;
+export type PackageRequest = NonNullable<AgentStatus["packages"]>[number];
+
+export const DependencyDecision = z.object({
+  decisions: z.array(z.object({
+    name: z.string(),
+    approve: z.boolean(),
+    version: z.string().describe("exact version to install (from the npm facts); empty when rejected"),
+    reason: z.string().describe("one sentence"),
+    usage: z.string().describe("how developers use it (import, CSS, gotchas); empty when rejected"),
+    alternative: z.string().describe("when rejected: what to use instead; else empty"),
+    envVars: z.array(z.string()).describe("env vars it needs (a free tier's or trial's API key); empty if none"),
+  })),
+});
+export type DependencyDecision = z.infer<typeof DependencyDecision>;
 
 export const Feature = z.object({
   id: z.string().describe("F1, F2, ..."),

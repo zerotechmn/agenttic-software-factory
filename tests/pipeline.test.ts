@@ -450,6 +450,49 @@ describe("brief attachments and dependencies", () => {
     expect(matchesGlob("src/web/main.tsx", ARCHITECT_GLOBS)).toBe(true);
     expect(matchesGlob("vite.config.ts", ARCHITECT_GLOBS)).toBe(true);
   });
+
+  it("a dev's package request: the architect decides, approved ones land on main, the dev continues in its session", async () => {
+    const { depsIO } = await import("../src/deps.ts");
+    const io = { ...depsIO };
+    const installs: string[][] = [];
+    depsIO.facts = async (name) => `{"version":"1.9.4","license":"BSD-2-Clause"} (${name})`;
+    depsIO.install = (specs, dir) => {
+      installs.push(specs);
+      const p = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+      for (const s of specs) (p.dependencies ??= {})[s.slice(0, s.lastIndexOf("@"))] = s.slice(s.lastIndexOf("@") + 1);
+      writeFileSync(join(dir, "package.json"), JSON.stringify(p));
+      return { ok: true, out: "" };
+    };
+    try {
+      const { ctx, runner, dir } = makeCtx({
+        scripts: {
+          "dev:T2": (r, n) => {
+            write(r.cwd, `src/gen/T2-${n}.ts`, "export {};\n");
+            if (n === 1) return { output: { status: "DONE_WITH_CONCERNS", summary: "list done, map needs a lib", filesChanged: [], concerns: [], packages: [{ name: "leaflet", why: "map view" }, { name: "moment", why: "dates" }] } };
+          },
+          "architect:T2": () => ({ output: { decisions: [
+            { name: "leaflet", approve: true, version: "1.9.4", reason: "maps", usage: "import L from 'leaflet'; import 'leaflet/dist/leaflet.css'", alternative: "", envVars: [] },
+            { name: "moment", approve: false, version: "", reason: "deprecated", usage: "", alternative: "Intl.DateTimeFormat", envVars: [] },
+          ] } }),
+        },
+      });
+      const s = await runPipeline(ctx);
+      const t2 = s.tasks.find((t) => t.id === "T2")!;
+      expect(t2.status).toBe("merged");
+      expect(installs).toEqual([["leaflet@1.9.4"]]);
+      expect(JSON.parse(readFileSync(join(dir, "package.json"), "utf8")).dependencies.leaflet).toBe("1.9.4");
+      const devs = runner.callsFor("dev", "T2");
+      expect(devs).toHaveLength(2);
+      expect(devs[1].resume).toBe("sess-dev:T2-1"); // same session, not an escalation
+      expect(devs[1].model).toBe("sonnet");
+      expect(devs[1].prompt).toMatch(/leaflet@1\.9\.4: installed\. import L/);
+      expect(devs[1].prompt).toMatch(/moment: rejected\. deprecated Use instead: Intl\.DateTimeFormat/);
+      expect(runner.callsFor("architect", "T2")[0].prompt).toContain("BSD-2-Clause");
+      expect(readFileSync(join(dir, ".forge/ledger.md"), "utf8")).toMatch(/RULING: install leaflet@1\.9\.4 for T2[\s\S]*RULING: reject moment for T2|RULING: reject moment for T2[\s\S]*RULING: install leaflet/);
+    } finally {
+      Object.assign(depsIO, io);
+    }
+  });
 });
 
 describe("research phase", () => {

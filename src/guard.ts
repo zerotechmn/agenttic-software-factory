@@ -101,6 +101,10 @@ function checkBash(policy: GuardPolicy, rawCommand: string): GuardDecision {
   if (!policy.allowBash) return { allow: false, reason: "your role has no shell access" };
   const command = stripHarmlessRedirects(rawCommand);
   for (const [re, reason] of BANNED_BASH) if (re.test(command)) return { allow: false, reason };
+  // node_modules is shared with main through a symlink, so an install here would change every task's dependencies
+  if (matchesGlob("package.json", policy.readonlyGlobs) && /\b(npm|pnpm|yarn|bun)\s+(i|install|add|remove|rm|uninstall|un|update|up)\b/.test(command)) {
+    return { allow: false, reason: "you can't install packages; list what you need in `packages` in your status JSON and the architect installs it" };
+  }
   if (/(^|[\s=:'"])~\//.test(command) || /\$\{?HOME\b/.test(command)) return { allow: false, reason: "home-directory paths are outside your project" };
   if (/\bgit\b[^|;&]*\s-C\s/.test(command) || /\bgit\b[^|;&]*--(git-dir|work-tree)/.test(command)) {
     return { allow: false, reason: "run git only in your own working directory" };

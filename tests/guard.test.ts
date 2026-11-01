@@ -184,3 +184,21 @@ describe("rtk rewrite (opt-in, after the guard allowed the command)", () => {
     expect(rtkRewrite("git status", "/nope/rtk")).toBeNull();
   });
 });
+
+describe("package installs", () => {
+  const wt = "/tmp/wt/T1";
+  const dev: GuardPolicy = { root: wt, writable: [wt], readonlyGlobs: ["package.json", "package-lock.json"], allowBash: true };
+  const architect: GuardPolicy = { root: wt, writable: [wt], readonlyGlobs: ["docs/prd.json"], allowBash: true };
+  it("a role that can't write package.json can't install (node_modules is shared with main) and is told to ask", () => {
+    for (const command of ["npm install leaflet", "npm i -D vitest", "pnpm add x", "yarn add x", "cd src && npm uninstall zod"]) {
+      const d = checkTool(dev, "Bash", { command });
+      expect(d.allow, command).toBe(false);
+      expect(!d.allow && d.reason).toMatch(/packages/);
+    }
+    expect(checkTool(dev, "Bash", { command: "npm run check" }).allow).toBe(true);
+    expect(checkTool(dev, "Bash", { command: "npm ls leaflet" }).allow).toBe(true);
+  });
+  it("the architect may install", () => {
+    expect(checkTool(architect, "Bash", { command: "npm install leaflet@1.9.4" }).allow).toBe(true);
+  });
+});

@@ -6,6 +6,7 @@ import { ensureDeps } from "./intake.ts";
 import { takeRequests } from "../requests.ts";
 import { actionableIssues, lanesOverlap, readyTasks } from "../dag.ts";
 import { addWorktree, changedSince, commitAll, headSha, mergeBranch, removeWorktree, repairRepo, resetTo, restorePaths, sh } from "../git.ts";
+import { handlePackages, MAX_PACKAGE_REQUESTS } from "../deps.ts";
 import { compressFailure } from "../local.ts";
 import { contextPack, devPrompt, integratorPrompt, reviewPrompt } from "../prompts.ts";
 import { loadRole } from "../roles.ts";
@@ -110,6 +111,12 @@ async function runTask(ctx: Ctx, t: Task, mergeLock: Mutex): Promise<void> {
       const escalated = !!t.escalated;
       const fail = await attempt(ctx, t, wt, base, mergeLock, escalated);
       if (fail === null) return;
+      if (fail.free) {
+        // a package request answered: the dev continues in its session, and it doesn't count as a failed attempt
+        t.feedback = fail.feedback;
+        ctx.save();
+        continue;
+      }
       escalated ? escalatedAttempts++ : devAttempts++;
       t.feedback = fail.feedback;
       const repeated = !!fail.signature && fail.signature === t.lastSignature;
@@ -167,7 +174,7 @@ function linkNodeModules(dir: string, wt: string): void {
   if (existsSync(src) && !existsSync(dst)) symlinkSync(src, dst, "dir");
 }
 
-type Failure = { feedback: string; signature?: string };
+type Failure = { feedback: string; signature?: string; free?: boolean };
 
 /** One dev → gate → review → merge cycle. Returns null on merge, a Failure otherwise. */
 async function attempt(ctx: Ctx, t: Task, wt: string, base: string, mergeLock: Mutex, escalated: boolean): Promise<Failure | null> {
@@ -208,6 +215,11 @@ async function attempt(ctx: Ctx, t: Task, wt: string, base: string, mergeLock: M
   const subject = await commitMessage(ctx, `feat(${t.id}): ${t.title}`, `${t.title}\n${status.summary}`);
   // Trailers tie every agent commit to its task, role, model and attempt, so the git history proves who wrote what.
   commitAll(wt, `${subject.includes(t.id) ? subject : `${subject} [${t.id}]`}\n\nForge-Task: ${t.id}\nForge-Role: dev\nForge-Model: ${model}\nForge-Attempt: ${t.attempts}\nForge-Phase: build`);
+  if (status.packages?.length && (t.packageRequests ?? 0) < MAX_PACKAGE_REQUESTS) {
+    t.packageRequests = (t.packageRequests ?? 0) + 1;
+    const pkgs = status.packages;
+    return { feedback: await mergeLock.run(() => handlePackages(ctx, t, wt, pkgs)), free: true };
+  }
   // BLOCKED with nothing changed is not done: never merge an empty "fix" as if it worked.
   if (status.status === "BLOCKED" && !sh(`git diff --numstat ${mb}..HEAD`, wt).out.trim()) {
     if (t.kind === "fix" && !t.lanesWidened) {

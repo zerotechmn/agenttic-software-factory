@@ -6,6 +6,18 @@ import type { Prd, QaReport, ResearchQuestion } from "./schemas.ts";
 
 const FOOTER = "When finished, reply ONLY with the JSON object required by the output schema.";
 
+export function depsPrompt(t: Task, requests: { name: string; version?: string; why: string; facts: string }[]): string {
+  return [
+    `Dispatch: ARCHITECT, dependency request from the developer of task ${t.id} (${t.title}).`,
+    "Decide each package by your role's Dependencies rules. Don't edit or install anything: the orchestrator installs what you approve on main.",
+    "",
+    ...requests.map((r) => `## ${r.name}${r.version ? `@${r.version}` : ""}\nWhy: ${r.why}\nnpm facts: ${r.facts}`),
+    "",
+    "Installed now: see package.json. Architecture: docs/architecture.md.",
+    FOOTER,
+  ].join("\n");
+}
+
 export function productPrompt(timebox: string, retryError?: string): string {
   return [
     "Dispatch: PRODUCT.",

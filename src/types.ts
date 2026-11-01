@@ -31,6 +31,8 @@ export interface Task {
   blockedStreak?: number;
   /** A fix task whose lanes were wrong got src/** once. */
   lanesWidened?: boolean;
+  /** How many times the dev asked the architect for npm packages (capped). */
+  packageRequests?: number;
 }
 
 export interface ForgeEvent {
