@@ -1,0 +1,5 @@
+node_modules/
+dist/
+
+.forge/
+public/finish.mp3

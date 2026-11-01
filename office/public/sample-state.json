@@ -1,0 +1,173 @@
+{
+ "run": null,
+ "tasks": [
+  {
+   "id": "T1",
+   "title": "FORGE proxy + replay server",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "feature"
+  },
+  {
+   "id": "T2",
+   "title": "Pure reducer + handoffs",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "feature"
+  },
+  {
+   "id": "T3",
+   "title": "Data hook, HUD, controls, keyboard",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "feature"
+  },
+  {
+   "id": "T4",
+   "title": "Pixi stage: machines, orbs, camera, quality",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "feature"
+  },
+  {
+   "id": "T5",
+   "title": "Packets + effects layers",
+   "status": "merged",
+   "attempts": 3,
+   "kind": "feature"
+  },
+  {
+   "id": "T6",
+   "title": "Machine panel + transmit",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "feature"
+  },
+  {
+   "id": "T7",
+   "title": "Overlays: tank, QA gauge, toasts",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "feature"
+  },
+  {
+   "id": "FIX1-1",
+   "title": "FPS below 30 at 1920x1080 / 10x",
+   "status": "merged",
+   "attempts": 4,
+   "kind": "fix"
+  },
+  {
+   "id": "FIX1-2",
+   "title": "Console pageerror from Pixi canvas access",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "FIX1-3",
+   "title": "Mobile layout (390px) is broken",
+   "status": "backlog",
+   "attempts": 0,
+   "kind": "fix"
+  },
+  {
+   "id": "FIX1-4",
+   "title": "Failed POST /forge/say is logged as a console error",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "IT1-1",
+   "title": "Label every machine with its role name and, while working, the active agent a\u2026",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "IT1-2",
+   "title": "Make it truly neon: one AdvancedBloom/Glow filter (pixi-filters) on the top-l\u2026",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "IT1-3",
+   "title": "Give each machine a distinct silhouette that shows its job instead of identic\u2026",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "IT1-4",
+   "title": "Packets: when several tasks are at one machine, queue or orbit them so none o\u2026",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "IT1-5",
+   "title": "Fix the layout: the QA gauge overlaps the intake machine. Put the budget tank\u2026",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "IT1-6",
+   "title": "Add a bottom activity ticker with the latest 6 events (icon, agent, short tex\u2026",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "FIXR-1",
+   "title": "The Vite dev proxy only forwards `/api` to :8787. The FORGE routes are mounted at `/forge`, outside `/api`. Under `npm r",
+   "status": "parked",
+   "attempts": 4,
+   "kind": "fix"
+  },
+  {
+   "id": "IT2-1",
+   "title": "Merged packets must not pile on the MAIN REACTOR label: absorb them into the \u2026",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "IT2-2",
+   "title": "Fix overlapping labels: DEVELOPER 1 overlaps ARCHITECT and MAIN REACTOR overl\u2026",
+   "status": "merged",
+   "attempts": 1,
+   "kind": "fix"
+  },
+  {
+   "id": "FIX1-1",
+   "title": "reactorRings never increases on merge",
+   "status": "parked",
+   "attempts": 4,
+   "kind": "fix"
+  },
+  {
+   "id": "FIX1-2",
+   "title": "Replay at 10\u00d7 is slow, and the run may not reach 'done' within 90 s",
+   "status": "parked",
+   "attempts": 5,
+   "kind": "fix"
+  },
+  {
+   "id": "FIX1-3",
+   "title": "Restart shows phase 'product' and elapsed 00:54 shortly after pressing R",
+   "status": "backlog",
+   "attempts": 0,
+   "kind": "fix"
+  },
+  {
+   "id": "FIX1-4",
+   "title": "Sending a transmit note in replay logs a console error",
+   "status": "backlog",
+   "attempts": 0,
+   "kind": "fix"
+  }
+ ]
+}

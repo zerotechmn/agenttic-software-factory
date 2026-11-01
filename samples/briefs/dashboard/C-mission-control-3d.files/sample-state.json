@@ -1,0 +1,434 @@
+{
+ "run": "medium-1-mvakyneq",
+ "phase": "done",
+ "startedAt": 1792131733250,
+ "tasks": [
+  {
+   "id": "T1",
+   "title": "Teams API: list/filter/search, create, detail, edit, status workflow",
+   "description": "Implement src/server/routes/teams.ts per docs/architecture.md \u00a7 API: GET / (ListTeamsQuery status+q filters, newest first), POST / (201 Team, status Registered, 409 duplicate name case-insensitive via name_key), GET /:id (loadTeamDetail, 404), PATCH /:id (F10, 409 duplicate, own name allowed), POST /:id/status (only MANUAL_NEXT_STATUS[current] allowed else 409; insert kind:'status' update 'Status changed to X' in same transaction). Validate bodies with contract schemas; 400 { error: 'Invalid input', details }. Use helpers in src/server/lib/teams.ts. Tests use app.request against the in-memory DB; use unique team names per test.",
+   "deps": [],
+   "lanes": [
+    "src/server/routes/teams.ts",
+    "tests/unit/teams-api.test.ts"
+   ],
+   "acceptance": [
+    "npm run check passes",
+    "tests/unit/teams-api.test.ts: POST valid \u2192 201 with id + status 'Registered'; missing name \u2192 400 {error}; 'sky hackers' after 'Sky Hackers' \u2192 409 'A team with this name already exists'",
+    "GET /api/teams?status=Building and ?q=ada (member or team name, case-insensitive) filter and combine",
+    "GET /api/teams/:id \u2192 TeamDetail parses; unknown id \u2192 404",
+    "POST /status: Registered\u2192Building\u2192Submitted ok and adds 'Status changed to Building' update; skip, backwards and 'Judged' \u2192 409 with status unchanged",
+    "PATCH renames/edits; duplicate name \u2192 409; status unchanged"
+   ],
+   "featureIds": [
+    "F1",
+    "F2",
+    "F7",
+    "F10"
+   ],
+   "kind": "feature",
+   "status": "merged",
+   "attempts": 1,
+   "escalations": 0,
+   "branch": "t/T1",
+   "escalated": false,
+   "sessionId": "270a15e2-3f02-43ee-bbf8-41f78af52e23"
+  },
+  {
+   "id": "T2",
+   "title": "Progress updates + judge scoring API",
+   "description": "Implement src/server/routes/updates.ts (POST /:id/updates \u2192 201 TeamUpdate kind 'note'; 400 via CreateUpdateRequest incl. empty/whitespace and >280; 404 unknown team) and src/server/routes/scores.ts (POST /:id/scores \u2192 201 TeamDetail after insert; 409 MESSAGES.notScorable unless status in SCORABLE_STATUSES; 400 {error,details} on invalid criteria/judge name; blank comment stored null; first score on a Submitted team sets Judged and inserts 'Status changed to Judged' status update). Tests insert fixture teams directly via db + schema (do not depend on teams.ts being implemented).",
+   "deps": [],
+   "lanes": [
+    "src/server/routes/updates.ts",
+    "src/server/routes/scores.ts",
+    "tests/unit/updates-api.test.ts",
+    "tests/unit/scores-api.test.ts"
+   ],
+   "acceptance": [
+    "npm run check passes",
+    "updates-api.test.ts: valid \u2192 201; '   ' \u2192 400; 281 chars \u2192 400; unknown team \u2192 404",
+    "scores-api.test.ts: Registered/Building team \u2192 409; 0, 11, 7.5, missing criterion or empty judge name \u2192 400 with details; Submitted team scored (8,7,9) \u2192 201, team.status 'Judged', average 8; second score (6,6,6) \u2192 average 7 and 2 scores; comment '' \u2192 null"
+   ],
+   "featureIds": [
+    "F3",
+    "F5"
+   ],
+   "kind": "feature",
+   "status": "merged",
+   "attempts": 1,
+   "escalations": 0,
+   "branch": "t/T2",
+   "escalated": false,
+   "sessionId": "78306bfa-c6bb-4fe2-bd10-5de8ef963eeb"
+  },
+  {
+   "id": "T3",
+   "title": "Dashboard + leaderboard API",
+   "description": "Implement src/server/routes/dashboard.ts (GET \u2192 DashboardResponse: counts for all four statuses incl. zeros, total, latest 10 updates across teams newest first with teamName) and src/server/routes/leaderboard.ts (GET \u2192 LeaderboardResponse: Judged teams only, averageScore desc, tie \u2192 earliest first score createdAt, consecutive ranks, judgeCount). Tests insert fixtures directly via db + schema.",
+   "deps": [],
+   "lanes": [
+    "src/server/routes/dashboard.ts",
+    "src/server/routes/leaderboard.ts",
+    "tests/unit/dashboard-api.test.ts",
+    "tests/unit/leaderboard-api.test.ts"
+   ],
+   "acceptance": [
+    "npm run check passes",
+    "dashboard-api.test.ts: counts match fixtures; latestUpdates length \u2264 10, newest first, includes teamName; response parses with DashboardResponse",
+    "leaderboard-api.test.ts: non-Judged teams excluded; order by average desc; equal averages \u2192 earlier first score ranks higher with ranks 1,2 (not shared); empty \u2192 []"
+   ],
+   "featureIds": [
+    "F4",
+    "F6"
+   ],
+   "kind": "feature",
+   "status": "merged",
+   "attempts": 1,
+   "escalations": 0,
+   "branch": "t/T3",
+   "escalated": false,
+   "sessionId": "2438a29d-0a86-4a2f-bf9c-9304e3a5460f"
+  },
+  {
+   "id": "T4",
+   "title": "Realistic demo seed data",
+   "description": "Implement seed(db, now) in src/server/db/seed.ts per docs/architecture.md \u00a7 Seed data: insert only when teams table is empty; 10 teams with exact names/statuses; Pixel Pioneers members Ada Okafor, Ben Tran, Chloe Ruiz; \u226514 updates with distinct timestamps within the 24 h before now (every non-Registered team \u22651, including consistent kind:'status' entries); one score each for Neural Nomads (9,9,9), Quantum Leapers (8,7,8), Code Ninjas (6,7,6). Use a transaction. Write directly with drizzle (no HTTP).",
+   "deps": [],
+   "lanes": [
+    "src/server/db/seed.ts",
+    "tests/unit/seed.test.ts"
+   ],
+   "acceptance": [
+    "npm run check passes",
+    "seed.test.ts: after seed(db) \u2192 10 teams with counts Registered 2, Building 3, Submitted 2, Judged 3; \u226514 updates with distinct createdAt all within 24 h of now; averages via averageScore 9.00/7.67/6.33 (formatAverage)",
+    "Calling seed twice leaves 10 teams (idempotent)",
+    "Only Pixel Pioneers matches 'ada' among Building teams"
+   ],
+   "featureIds": [
+    "F8"
+   ],
+   "kind": "feature",
+   "status": "merged",
+   "attempts": 1,
+   "escalations": 0,
+   "branch": "t/T4",
+   "escalated": false,
+   "sessionId": "d42fa4f6-a5c3-4c80-8d3d-dcf684b1b50e"
+  },
+  {
+   "id": "T5",
+   "title": "Teams page: register form, filter + search, team cards",
+   "description": "Implement src/web/pages/Teams.tsx (+ page-local components in src/web/components/teams/). 'Register team' button reveals the form (labels 'Team name', 'Members (comma-separated)', 'Project idea', submit 'Register team'); client validation with MESSAGES next to each field; API 409 shown as 'A team with this name already exists'. Status filter (All + 4 statuses) synced to the ?status= URL query (pre-selected when arriving from a dashboard tile); search input 'Search teams or members' (full width on phone). Cards link to /teams/:id, show name, StatusBadge, each member as its own element, idea. Loading/error/empty states ('No teams registered yet' vs 'No teams match your filters'). Follow docs/design.md.",
+   "deps": [
+    "T1"
+   ],
+   "lanes": [
+    "src/web/pages/Teams.tsx",
+    "src/web/components/teams/**",
+    "tests/unit/teams-page.test.tsx"
+   ],
+   "acceptance": [
+    "npm run check passes",
+    "teams-page.test.tsx (jsdom, fetch stubbed): renders cards with StatusBadge; empty states for no teams vs filtered; submitting empty form shows the three field errors and no POST; 409 response shows duplicate-name error; ?status=Submitted pre-selects the filter"
+   ],
+   "featureIds": [
+    "F1",
+    "F7",
+    "F9"
+   ],
+   "kind": "feature",
+   "status": "merged",
+   "attempts": 1,
+   "escalations": 0,
+   "branch": "t/T5",
+   "escalated": false,
+   "sessionId": "77987d98-1af9-49b1-95b1-0c27e7f62cc9"
+  },
+  {
+   "id": "T6",
+   "title": "Team detail page: status advance, updates, scoring, edit",
+   "description": "Implement src/web/pages/TeamDetail.tsx (+ components in src/web/components/team-detail/). Loads TeamDetail via API.team(id). Move-to button from MANUAL_NEXT_STATUS (none for Submitted/Judged). 'Progress update' textarea with 'n/280' counter, 'Post update', errors from MESSAGES, cleared on success; 'Updates' list newest first with timestamps, 'No updates yet'. 'Score this team' section only when status in SCORABLE_STATUSES, fields per architecture.md, field errors 'Judge name is required' / 'Enter a whole number from 1 to 10'; 'Average score X.XX' via formatAverage; 'Scores' rows ('Dr. Kim', 'Innovation 8', 'Execution 7', 'Demo 9', comment if any) or 'No scores yet'. 'Edit team' form prefilled with 'Save changes'/'Cancel', 409 duplicate shown. Refresh via reload() after mutations. 404 \u2192 friendly not-found state.",
+   "deps": [
+    "T1",
+    "T2"
+   ],
+   "lanes": [
+    "src/web/pages/TeamDetail.tsx",
+    "src/web/components/team-detail/**",
+    "tests/unit/team-detail-page.test.tsx"
+   ],
+   "acceptance": [
+    "npm run check passes",
+    "team-detail-page.test.tsx (jsdom, fetch stubbed, MemoryRouter at /teams/:id with Routes): Registered shows 'Move to Building'; Submitted shows 'Score this team' and no Move button; Building hides scoring; empty update shows 'Update cannot be empty' with no POST; 281 chars shows length error; score 11 shows 'Enter a whole number from 1 to 10'; average renders '8.00'"
+   ],
+   "featureIds": [
+    "F2",
+    "F3",
+    "F5",
+    "F10"
+   ],
+   "kind": "feature",
+   "status": "merged",
+   "attempts": 1,
+   "escalations": 0,
+   "branch": "t/T6",
+   "escalated": false,
+   "sessionId": "8a080b29-9d4c-424f-ba6e-5b8b5b2713a2"
+  },
+  {
+   "id": "T7",
+   "title": "Dashboard and Leaderboard pages",
+   "description": "Implement src/web/pages/Dashboard.tsx (+ src/web/components/dashboard/): StatTiles 'Registered','Building','Submitted','Judged' (each links to /teams?status=X) and 'Total teams'; single row at \u22651280px, \u22642 columns at 375px; 'Latest updates' feed with team-name link to /teams/:id, text, timestamp, empty 'No updates yet'; refetch every 5000 ms (clear interval on unmount, keep showing data while refetching). Implement src/web/pages/Leaderboard.tsx (+ src/web/components/leaderboard/): table with rank, team (link), average (formatAverage), judges; 'No judged teams yet'. Must not overflow horizontally at 375px.",
+   "deps": [
+    "T3"
+   ],
+   "lanes": [
+    "src/web/pages/Dashboard.tsx",
+    "src/web/pages/Leaderboard.tsx",
+    "src/web/components/dashboard/**",
+    "src/web/components/leaderboard/**",
+    "tests/unit/dashboard-page.test.tsx",
+    "tests/unit/leaderboard-page.test.tsx"
+   ],
+   "acceptance": [
+    "npm run check passes",
+    "dashboard-page.test.tsx (jsdom, fetch stubbed): tiles show label + count; feed items link to /teams/:id; empty feed shows 'No updates yet'; with fake timers a second fetch happens after 5 s",
+    "leaderboard-page.test.tsx: rows in API order with averages '9.00','7.67'; team names link to /teams/:id; empty \u2192 'No judged teams yet'"
+   ],
+   "featureIds": [
+    "F4",
+    "F6",
+    "F7",
+    "F9"
+   ],
+   "kind": "feature",
+   "status": "merged",
+   "attempts": 1,
+   "escalations": 0,
+   "branch": "t/T7",
+   "escalated": false,
+   "sessionId": "be67ee95-53f5-46fd-b4c0-55cc599d8a93"
+  }
+ ],
+ "qaRounds": [
+  {
+   "round": 1,
+   "score": 0,
+   "failures": 0
+  },
+  {
+   "round": 2,
+   "score": 9,
+   "failures": 0
+  }
+ ],
+ "spend": {
+  "usd": 12.823384,
+  "byRole": {
+   "product": 0.497044,
+   "local": 0,
+   "uiux": 0.574248,
+   "architect": 1.665716,
+   "dev": 5.703748,
+   "qa": 0.802736,
+   "reviewer": 2.719555,
+   "final_reviewer": 0.832694,
+   "devops": 0.027643
+  },
+  "byPhase": {
+   "product": 0.497044,
+   "design": 2.239964,
+   "contract_gate": 0,
+   "build": 8.423303,
+   "qa": 0.802736,
+   "final_review": 0.832694,
+   "deploy": 0.027643,
+   "report": 0
+  },
+  "local": 13,
+  "remote": 49
+ },
+ "landing": false,
+ "done": [
+  "intake",
+  "product",
+  "design",
+  "contract_gate",
+  "build",
+  "qa",
+  "final_review",
+  "deploy",
+  "report"
+ ],
+ "baseSha": "0167fd22e33e0e609ebe8b5c603d834b11a91831",
+ "prd": {
+  "product": "Hackathon Team Tracker",
+  "pitch": "A single-screen control room for organizers of a 24-hour hackathon: register teams, move them through Registered \u2192 Building \u2192 Submitted \u2192 Judged, post timestamped progress updates, collect judge scores, and see a live dashboard and leaderboard.",
+  "users": [
+   "Hackathon organizer: registers teams, advances their status, posts progress updates, watches the dashboard (no login).",
+   "Judge: opens a submitted team and scores it 1-10 on Innovation, Execution and Demo with an optional comment (same no-login app, entered by an organizer or judge at the laptop)."
+  ],
+  "features": [
+   {
+    "id": "F1",
+    "title": "Register and list teams",
+    "priority": "must",
+    "story": "As an organizer I register a team with a name, member names and a project idea, and see all teams in a list. New teams start as Registered. Team names are unique case-insensitively. Navigation has links labelled Dashboard, Teams, Leaderboard.",
+    "acceptance": [
+     "Given the Teams page (/teams), When I click the button 'Register team', Then a form appears with labelled fields 'Team name', 'Members (comma-separated)', 'Project idea' and a submit button 'Register team'.",
+     "Given the form is filled with Team name 'Sky Hackers', Members 'Ana Lee, Raj Patel', Project idea 'Drone-based trail mapping', When I submit, Then the Teams list shows a card 'Sky Hackers' with members 'Ana Lee' and 'Raj Patel', the idea text, and a status badge 'Registered'.",
+     "Given an empty 'Team name' or empty Members or empty 'Project idea', When I submit, Then a visible error message appears next to the empty field ('Team name is required', 'Add at least one member', 'Project idea is required') and no team is created.",
+     "Given a team named 'Sky Hackers' exists, When I register 'sky hackers', Then the form shows the error 'A team with this name already exists' and the team count is unchanged.",
+     "Given the Teams list is empty after filtering, Then an empty state with the text 'No teams match your filters' is shown; Given no teams exist at all, the empty state reads 'No teams registered yet'.",
+     "Given the API receives a create-team request with a missing name, Then it responds 400 with { error }; a valid request returns the created team with status 'Registered' and an id."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F2",
+    "title": "Team status workflow",
+    "priority": "must",
+    "story": "Each team has exactly one status that moves forward only: Registered \u2192 Building \u2192 Submitted \u2192 Judged. Organizers advance Registered\u2192Building and Building\u2192Submitted from the team detail page (/teams/:id) with one click. Judged is reached only by scoring (F5), never by a button. No backward moves.",
+    "acceptance": [
+     "Given a Registered team's detail page, Then a button 'Move to Building' is visible; When clicked, Then the status badge reads 'Building' and the button now reads 'Move to Submitted'.",
+     "Given a Building team, When I click 'Move to Submitted', Then the badge reads 'Submitted' and no advance button is shown (instead the 'Score this team' section from F5 is shown).",
+     "Given a Judged team, Then no 'Move to' button is shown.",
+     "Given a status change, Then an update entry is automatically added to the team's timeline with text 'Status changed to Building' (or 'Submitted') and a timestamp.",
+     "Given the API receives a status change that skips a step (Registered \u2192 Submitted) or goes backwards or targets 'Judged' directly, Then it responds 409 with { error } and the status is unchanged.",
+     "The status badge on every team card and detail page uses the exact labels 'Registered', 'Building', 'Submitted', 'Judged' with a distinct color per status."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F3",
+    "title": "Timestamped progress updates",
+    "priority": "must",
+    "story": "On a team's detail page the organizer posts short progress updates (max 280 characters). They appear newest-first with a timestamp, together with automatic status-change entries.",
+    "acceptance": [
+     "Given a team detail page, Then a labelled textarea 'Progress update' and a button 'Post update' are visible.",
+     "Given I type 'Backend API is live' and click 'Post update', Then the text appears at the top of the team's 'Updates' list with a visible timestamp, and the textarea is cleared.",
+     "Given an empty or whitespace-only update, When I click 'Post update', Then the error 'Update cannot be empty' is shown and nothing is added.",
+     "Given an update longer than 280 characters, When I submit, Then the error 'Update must be 280 characters or fewer' is shown and nothing is added; a character counter such as '12/280' is displayed under the textarea.",
+     "Given a team with no updates, Then the Updates list shows the empty state 'No updates yet'.",
+     "Given two updates posted in order A then B, Then B is listed above A.",
+     "Given the API receives an update for an unknown team id, Then it responds 404 with { error }."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F4",
+    "title": "Dashboard with status counts and latest updates",
+    "priority": "must",
+    "story": "The home page (/) shows how many teams are in each status and a feed of the latest updates across all teams, so organizers can see the whole event at a glance.",
+    "acceptance": [
+     "Given the seeded demo data, When I open /, Then four stat tiles show 'Registered 2', 'Building 3', 'Submitted 2', 'Judged 3' (label and number in the same tile) plus a 'Total teams 10' tile.",
+     "Given the dashboard, Then a section 'Latest updates' lists the 10 most recent updates across all teams, newest first, each showing team name, update text and timestamp.",
+     "Given I click a team name inside the 'Latest updates' feed, Then I navigate to that team's detail page.",
+     "Given I post a new update on a team and return to /, Then that update is the first item in 'Latest updates' and the tile counts reflect any status change.",
+     "Given the dashboard stays open, Then it refetches data every 5 seconds so updates posted from another browser tab appear without a manual reload (verifiable by posting via API and waiting up to 6 seconds).",
+     "Given no updates exist, Then 'Latest updates' shows the empty state 'No updates yet'."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F5",
+    "title": "Judge scoring of submitted teams",
+    "priority": "must",
+    "story": "A judge opens a Submitted team and scores it 1-10 on Innovation, Execution and Demo with an optional comment and a required judge name. The first score moves the team to Judged. Multiple judges may score the same team (a Judged team can still receive more scores); the team's average is the mean of all criterion scores across all judges, shown to 2 decimals.",
+    "acceptance": [
+     "Given a team with status Submitted, Then its detail page shows a section 'Score this team' with labelled fields 'Judge name', 'Innovation (1-10)', 'Execution (1-10)', 'Demo (1-10)', 'Comment (optional)' and a button 'Submit score'.",
+     "Given a team with status Registered or Building, Then the 'Score this team' section is not shown, and the API rejects a score request with 409 and { error }.",
+     "Given Judge name 'Dr. Kim', Innovation 8, Execution 7, Demo 9 and I click 'Submit score', Then the team's badge becomes 'Judged', the page shows 'Average score 8.00' and a 'Scores' list row with 'Dr. Kim', 'Innovation 8', 'Execution 7', 'Demo 9'.",
+     "Given any criterion is 0, 11, non-integer or empty, or Judge name is empty, When I submit, Then a visible field error is shown ('Enter a whole number from 1 to 10' / 'Judge name is required') and no score is saved; the API responds 400 with { error, details }.",
+     "Given a Judged team scored by Dr. Kim (8,7,9), When a second judge 'Ms. Cho' submits (6,6,6), Then the page shows 'Average score 7.00' and 2 rows in 'Scores'.",
+     "Given a comment 'Great demo' is entered, Then it is displayed in that score's row; Given no comment, the row shows no comment text.",
+     "Given a Submitted team with no scores, Then the detail page shows 'No scores yet' in the Scores area."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F6",
+    "title": "Leaderboard",
+    "priority": "must",
+    "story": "The Leaderboard page (/leaderboard) ranks all Judged teams by average score, highest first, so organizers can announce winners.",
+    "acceptance": [
+     "Given the seeded demo data, When I open /leaderboard, Then a table lists 3 rows in this order with rank, team, average and judge-count columns: 1 'Neural Nomads' 9.00, 2 'Quantum Leapers' 7.67, 3 'Code Ninjas' 6.33.",
+     "Given a Submitted team 'Cloud Nine' is scored (10, 10, 10) by one judge, When I reload /leaderboard, Then 'Cloud Nine' is rank 1 with 10.00 and the other teams shift down one rank.",
+     "Given two teams with an equal average, Then the one with the earlier first-score time ranks higher and both show consecutive ranks (no shared rank).",
+     "Given a team name in the leaderboard, When clicked, Then I navigate to its detail page.",
+     "Given no Judged teams exist, Then the empty state 'No judged teams yet' is shown.",
+     "Teams that are not Judged never appear on the leaderboard."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F7",
+    "title": "Filter by status and search teams",
+    "priority": "should",
+    "story": "On the Teams page organizers filter by status with a control and search by team or member name; both combine.",
+    "acceptance": [
+     "Given /teams, Then a filter control with options 'All', 'Registered', 'Building', 'Submitted', 'Judged' (default 'All') and a search input labelled 'Search teams or members' are visible.",
+     "Given the seeded data, When I choose 'Building', Then exactly 3 team cards are shown, all with badge 'Building'.",
+     "Given the seeded data, When I type 'ada' into the search, Then only teams having a member whose name contains 'ada' (case-insensitive) or a team name containing 'ada' are shown, including 'Pixel Pioneers' (member Ada Okafor).",
+     "Given filter 'Building' and search 'ada', Then only teams satisfying both are shown.",
+     "Given a search with no matches, Then the empty state 'No teams match your filters' is shown; clearing the search restores all 10 teams.",
+     "Given a dashboard stat tile, When I click it (e.g. 'Submitted'), Then I land on /teams with that status filter pre-selected (URL query ?status=Submitted)."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F8",
+    "title": "Realistic demo data",
+    "priority": "should",
+    "story": "On first start with an empty database the app seeds 10 teams across all statuses, progress updates and scores so every screen looks alive. Seed only when empty.",
+    "acceptance": [
+     "Given a fresh database, When the app starts, Then /teams lists 10 teams: Registered: 'Data Wranglers', 'Team Rocket'; Building: 'Pixel Pioneers' (members Ada Okafor, Ben Tran, Chloe Ruiz), 'Byte Me', 'Null Pointers'; Submitted: 'Cloud Nine', 'Hack Attack'; Judged: 'Neural Nomads', 'Quantum Leapers', 'Code Ninjas'.",
+     "Given the seeded data, Then there are at least 14 progress updates spread over the last 24 hours with distinct timestamps, and every non-Registered team has at least one update.",
+     "Given the seeded scores, Then Neural Nomads averages 9.00, Quantum Leapers 7.67 and Code Ninjas 6.33, each scored by one judge.",
+     "Given the app restarts with existing data, Then no duplicate teams are created."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F9",
+    "title": "Responsive layout for laptop and phone",
+    "priority": "should",
+    "story": "All pages work at 1280px laptop width and at 375px phone width without horizontal scrolling or overlapping controls.",
+    "acceptance": [
+     "Given a 375x667 viewport, When I open /, /teams, a team detail page and /leaderboard, Then document scrollWidth does not exceed the viewport width (no horizontal scroll).",
+     "Given a 375px viewport, Then the navigation links Dashboard, Teams, Leaderboard are reachable (visible or behind a button labelled 'Menu').",
+     "Given a 375px viewport, Then the stat tiles stack into at most 2 columns and the Teams filter and search inputs are full width.",
+     "Given a 1280px viewport, Then the dashboard shows the stat tiles in a single row and 'Latest updates' beside or below without overlap.",
+     "Every interactive control has a visible text label and a minimum tap target height of 40px at 375px width."
+    ],
+    "passes": true
+   },
+   {
+    "id": "F10",
+    "title": "Edit team details",
+    "priority": "could",
+    "story": "Organizers can fix typos in a team's name, members and project idea from the detail page. Status and scores are untouched.",
+    "acceptance": [
+     "Given a team detail page, When I click 'Edit team', Then the form is prefilled with the current name, members and idea and has buttons 'Save changes' and 'Cancel'.",
+     "Given I change the idea to 'New idea' and click 'Save changes', Then the detail page shows 'New idea' and the status and scores are unchanged.",
+     "Given I rename the team to another existing team's name, Then the error 'A team with this name already exists' is shown and nothing is saved."
+    ],
+    "passes": true
+   }
+  ],
+  "outOfScope": [
+   "Authentication, accounts, roles or per-judge logins; the app is single organizer-facing with no login. Judge name is a free-text field, not an identity.",
+   "Deleting teams, updates or scores; editing or deleting posted updates or scores.",
+   "Moving a team backwards in status; manually setting Judged without a score.",
+   "Real-time push (WebSockets/SSE): 'live' is implemented by 5-second polling on the dashboard.",
+   "File uploads, project links/repo integration, team avatars, email or chat notifications.",
+   "Judging rubrics beyond the three fixed criteria (Innovation, Execution, Demo); weighted scores; judge assignments.",
+   "Multiple events or hackathons; the app tracks a single event.",
+   "Pagination; the app assumes at most ~100 teams.",
+   "Export (CSV/PDF) of leaderboard or data.",
+   "Tie-breaking beyond earliest first-score time; scores from the same judge name are allowed more than once and all count."
+  ]
+ },
+ "budgetUsd": 30
+}

@@ -1,0 +1,532 @@
+{
+ "_doc": "Verified by hand. Tiles are 16x16 with a 1px margin: pixel x = col*17, y = row*17. Furniture from indoor.png, character layers from chars.png. The pack has NO floors or walls: draw those in code.",
+ "tileSize": 16,
+ "margin": 1,
+ "sheets": {
+  "indoor": "kenney-roguelike-indoors/roguelikeIndoor_transparent.png",
+  "chars": "kenney-roguelike-characters/roguelikeChar_transparent.png"
+ },
+ "furniture": {
+  "desk": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     5,
+     4
+    ]
+   ]
+  },
+  "desk_wide": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     4,
+     4
+    ],
+    [
+     6,
+     4
+    ]
+   ]
+  },
+  "chair_front": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  "chair_back": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     1,
+     2
+    ]
+   ]
+  },
+  "chair_side": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     2,
+     4
+    ]
+   ]
+  },
+  "meeting_table": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     1,
+     11
+    ],
+    [
+     2,
+     11
+    ],
+    [
+     3,
+     11
+    ]
+   ],
+   "w": 3
+  },
+  "round_table": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     6,
+     0
+    ]
+   ]
+  },
+  "bench": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     4,
+     6
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     7,
+     6
+    ]
+   ],
+   "w": 3
+  },
+  "bookshelf": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     20,
+     17
+    ],
+    [
+     21,
+     17
+    ]
+   ],
+   "w": 2
+  },
+  "cabinet": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     0,
+     15
+    ]
+   ]
+  },
+  "filing_cabinet": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     1,
+     17
+    ]
+   ]
+  },
+  "counter_sink": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     8,
+     12
+    ]
+   ]
+  },
+  "counter": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     1,
+     12
+    ]
+   ]
+  },
+  "counter_bottles": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     5,
+     12
+    ]
+   ]
+  },
+  "stove": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  "server_rack": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     25,
+     8
+    ],
+    [
+     25,
+     9
+    ]
+   ],
+   "w": 1
+  },
+  "plant": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     16,
+     0
+    ]
+   ]
+  },
+  "plant_small": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     17,
+     0
+    ]
+   ]
+  },
+  "rug_orange": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     16,
+     9
+    ],
+    [
+     17,
+     9
+    ],
+    [
+     18,
+     9
+    ]
+   ],
+   "w": 3
+  },
+  "rug_green": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     16,
+     11
+    ],
+    [
+     17,
+     11
+    ],
+    [
+     18,
+     11
+    ]
+   ],
+   "w": 3
+  },
+  "runner_orange": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     16,
+     15
+    ],
+    [
+     17,
+     15
+    ],
+    [
+     18,
+     15
+    ]
+   ],
+   "w": 3
+  },
+  "painting": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     19,
+     13
+    ]
+   ]
+  },
+  "board": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     20,
+     13
+    ],
+    [
+     21,
+     13
+    ]
+   ],
+   "w": 2
+  },
+  "map_frame": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     20,
+     12
+    ],
+    [
+     21,
+     12
+    ]
+   ],
+   "w": 2
+  },
+  "mirror": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     22,
+     14
+    ]
+   ]
+  },
+  "lamp": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     16,
+     6
+    ]
+   ]
+  },
+  "candelabra": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     19,
+     0
+    ]
+   ]
+  },
+  "chandelier": {
+   "sheet": "indoor",
+   "tiles": [
+    [
+     17,
+     4
+    ]
+   ]
+  }
+ },
+ "characterLayers": {
+  "order": [
+   "body",
+   "pants",
+   "shirt",
+   "hair"
+  ]
+ },
+ "characters": {
+  "product": {
+   "name": "Pia",
+   "body": [
+    0,
+    0
+   ],
+   "pants": [
+    3,
+    1
+   ],
+   "shirt": [
+    10,
+    0
+   ],
+   "hair": [
+    24,
+    1
+   ]
+  },
+  "researcher": {
+   "name": "Remy",
+   "body": [
+    0,
+    1
+   ],
+   "pants": [
+    3,
+    1
+   ],
+   "shirt": [
+    14,
+    4
+   ],
+   "hair": [
+    19,
+    0
+   ]
+  },
+  "architect": {
+   "name": "Arlo",
+   "body": [
+    0,
+    2
+   ],
+   "pants": [
+    3,
+    7
+   ],
+   "shirt": [
+    14,
+    0
+   ],
+   "hair": [
+    22,
+    4
+   ]
+  },
+  "uiux": {
+   "name": "Dee",
+   "body": [
+    0,
+    0
+   ],
+   "pants": [
+    3,
+    5
+   ],
+   "shirt": [
+    6,
+    5
+   ],
+   "hair": [
+    21,
+    4
+   ]
+  },
+  "dev": {
+   "name": "Dev",
+   "body": [
+    0,
+    1
+   ],
+   "pants": [
+    3,
+    1
+   ],
+   "shirt": [
+    6,
+    0
+   ],
+   "hair": [
+    23,
+    0
+   ]
+  },
+  "reviewer": {
+   "name": "Rex",
+   "body": [
+    0,
+    0
+   ],
+   "pants": [
+    3,
+    7
+   ],
+   "shirt": [
+    10,
+    5
+   ],
+   "hair": [
+    19,
+    8
+   ]
+  },
+  "integrator": {
+   "name": "Ina",
+   "body": [
+    0,
+    2
+   ],
+   "pants": [
+    3,
+    6
+   ],
+   "shirt": [
+    10,
+    4
+   ],
+   "hair": [
+    20,
+    0
+   ]
+  },
+  "qa": {
+   "name": "Quinn",
+   "body": [
+    0,
+    1
+   ],
+   "pants": [
+    3,
+    8
+   ],
+   "shirt": [
+    6,
+    4
+   ],
+   "hair": [
+    25,
+    4
+   ]
+  },
+  "final_reviewer": {
+   "name": "Fay",
+   "body": [
+    0,
+    0
+   ],
+   "pants": [
+    3,
+    7
+   ],
+   "shirt": [
+    14,
+    5
+   ],
+   "hair": [
+    20,
+    8
+   ]
+  },
+  "devops": {
+   "name": "Ops",
+   "body": [
+    0,
+    2
+   ],
+   "pants": [
+    3,
+    1
+   ],
+   "shirt": [
+    10,
+    1
+   ],
+   "hair": [
+    19,
+    4
+   ]
+  }
+ }
+}

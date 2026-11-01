@@ -1,0 +1,9 @@
+<!doctype html><body style="margin:0;background:#3a3a3a"><canvas id=c></canvas><script>
+const p=new URLSearchParams(location.search); const src=p.get("src"), S=+p.get("s")||3, c0=+p.get("c0")||0, c1=+p.get("c1")||99, r0=+p.get("r0")||0, r1=+p.get("r1")||99;
+const img=new Image(); img.onload=()=>{ const cols=Math.min(c1,(img.width+1)/17-1), rows=Math.min(r1,(img.height+1)/17-1);
+ const cv=document.getElementById("c"), W=(cols-c0+1)*(16*S+14)+30, H=(rows-r0+1)*(16*S+14)+30; cv.width=W; cv.height=H; const g=cv.getContext("2d"); g.imageSmoothingEnabled=false;
+ g.fillStyle="#fff"; g.font="11px monospace";
+ for(let r=r0;r<=rows;r++) for(let c=c0;c<=cols;c++){ const x=30+(c-c0)*(16*S+14), y=30+(r-r0)*(16*S+14);
+   g.fillStyle="#555"; g.fillRect(x,y,16*S,16*S); g.drawImage(img,c*17,r*17,16,16,x,y,16*S,16*S); }
+ for(let c=c0;c<=cols;c++){g.fillStyle="#ff0";g.fillText(c,30+(c-c0)*(16*S+14)+16*S/2-6,20);} for(let r=r0;r<=rows;r++){g.fillStyle="#ff0";g.fillText(r,4,30+(r-r0)*(16*S+14)+16*S/2+4);}
+ document.title="done"; }; img.src=src; </script></body>

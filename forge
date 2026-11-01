@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# FORGE launcher: pins Node 24 (nvm) and runs the CLI from anywhere.
+HERE="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")" && pwd)"
+NODE24="$(ls -d "$HOME"/.nvm/versions/node/v24.* 2>/dev/null | sort -V | tail -1)"
+[ -n "$NODE24" ] && export PATH="$NODE24/bin:$PATH"
+# Secrets and settings from $HERE/.env (ANTHROPIC_API_KEY=…); variables already exported in the shell win.
+ENV_ARGS=()
+[ -f "$HERE/.env" ] && ENV_ARGS=(--env-file="$HERE/.env")
+exec "$HERE/node_modules/.bin/tsx" "${ENV_ARGS[@]}" "$HERE/bin/forge.ts" "$@"

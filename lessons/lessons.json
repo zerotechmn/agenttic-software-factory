@@ -1,0 +1,280 @@
+[
+  {
+    "id": "architect-no-e2e-in-dev-lanes",
+    "role": "architect",
+    "trigger": "When planning dev task lanes",
+    "lesson": "Never put tests/e2e/**, tests/acceptance/**, docs/** or .forge/** in a dev task's lanes or acceptance; QA owns e2e and devs can't write there.",
+    "confidence": 0.9,
+    "runs": [
+      "office-console"
+    ],
+    "status": "active",
+    "source": "seed",
+    "updatedAt": "2026-10-19T00:00:00.000Z"
+  },
+  {
+    "id": "reviewer-judge-lanes-only",
+    "role": "reviewer",
+    "trigger": "When reviewing a task",
+    "lesson": "Judge only the task's lanes plus tests/unit; never reject for missing files the developer is not allowed to write.",
+    "confidence": 0.7,
+    "runs": [
+      "office-console"
+    ],
+    "status": "active",
+    "source": "seed",
+    "updatedAt": "2026-10-19T00:00:00.000Z"
+  },
+  {
+    "id": "dev-report-blocked-not-repeat",
+    "role": "dev",
+    "trigger": "When the same gate error comes back after a fix",
+    "lesson": "Stop and report BLOCKED with the exact cause and file, instead of retrying the same kind of fix.",
+    "confidence": 0.6,
+    "runs": [
+      "office-console"
+    ],
+    "status": "active",
+    "source": "seed",
+    "updatedAt": "2026-10-20T00:00:00.000Z"
+  },
+  {
+    "id": "architect-green-baseline",
+    "role": "architect",
+    "trigger": "When finishing contracts and stubs",
+    "lesson": "Run `npm run check` after your last edit; main must stay green after the baseline commit or the contract gate fails.",
+    "confidence": 0.6,
+    "runs": [
+      "ab-base"
+    ],
+    "status": "active",
+    "source": "seed",
+    "updatedAt": "2026-10-20T00:00:00.000Z"
+  },
+  {
+    "id": "qa-typecheck-e2e-specs",
+    "role": "qa",
+    "trigger": "When writing Playwright specs",
+    "lesson": "Run `npx tsc --noEmit` on new e2e files before finishing; a spec that breaks typecheck is reverted and wastes the round.",
+    "confidence": 0.6,
+    "runs": [
+      "tiny-notes"
+    ],
+    "status": "active",
+    "source": "seed",
+    "updatedAt": "2026-10-16T00:00:00.000Z"
+  },
+  {
+    "id": "dev-no-config-edits",
+    "role": "dev",
+    "trigger": "When a lint or config error outside your lanes blocks the gate",
+    "lesson": "Report it as a concern; don't edit eslint, tsconfig or vite configs that are not in your lanes.",
+    "confidence": 0.5,
+    "runs": [
+      "ab-base"
+    ],
+    "status": "active",
+    "source": "seed",
+    "updatedAt": "2026-10-20T00:00:00.000Z"
+  },
+  {
+    "id": "dev-paths-inside-worktree",
+    "role": "dev",
+    "trigger": "when running shell commands or reading files from inside the task worktree",
+    "lesson": "Use paths relative to your working directory root and never climb with ../ to reach shared files such as src/shared/contracts.ts; if a file is outside your directory, report it instead of trying other relative paths.",
+    "confidence": 0.1,
+    "runs": [
+      "rehearsal-1029-mvsypc9i",
+      "test-mvt6wkfs",
+      "test-splitter-mvt9ejo5",
+      "yoga-mvudfdwl",
+      "habit-tracker-mvul3sxq",
+      "lunch-run-mvupjbsl",
+      "test-run-official-mvuzipp0"
+    ],
+    "status": "retired",
+    "source": "learned",
+    "updatedAt": "2026-10-31T06:00:00.000Z",
+    "note": "Learned from guard false positives: the guard read ../ imports inside heredoc file contents as paths. Guard fixed; relative imports are correct."
+  },
+  {
+    "id": "product-prd-covers-brief",
+    "role": "product",
+    "trigger": "when drafting or revising docs/prd.json from a brief",
+    "lesson": "Map every requirement in the brief to a PRD item before finishing, and add must-haves only when the brief or an explicit requirement asks for them.",
+    "confidence": 0.9,
+    "runs": [
+      "rehearsal-1029-mvsypc9i",
+      "test-mvt6wkfs",
+      "habit-tracker-mvul3sxq",
+      "test-run-official-mvuzipp0",
+      "wheels2go-11010804-mvxjnnhl"
+    ],
+    "status": "active",
+    "source": "learned",
+    "updatedAt": "2026-11-01T08:32:41.702Z"
+  },
+  {
+    "id": "dev-git-only-own-worktree",
+    "role": "dev",
+    "trigger": "when you need git status, diff or log while working in a task worktree",
+    "lesson": "Run git commands only inside your own task worktree; if you need repository-wide history or another branch, report it instead of running git from a parent or shared path.",
+    "confidence": 0.3,
+    "runs": [
+      "test-mvt6wkfs"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-10-29T07:08:24.619Z"
+  },
+  {
+    "id": "dev-match-spec-structure",
+    "role": "dev",
+    "trigger": "when building a page or control that the brief or docs/design.md specifies",
+    "lesson": "Implement the exact control state (disabled versus hidden) and screen composition that the brief and docs/design.md name, and check each one against the brief before reporting DONE.",
+    "confidence": 0.45,
+    "runs": [
+      "yoga-mvudfdwl",
+      "test-run-official-mvuzipp0"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-10-31T08:24:59.265Z"
+  },
+  {
+    "id": "uiux-budget-write-early",
+    "role": "uiux",
+    "trigger": "when producing docs/design.md under a turn or dollar budget",
+    "lesson": "Write docs/design.md early in incremental sections and stop exploring once half the budget is used, so a usable file exists before the cap is hit.",
+    "confidence": 0.45,
+    "runs": [
+      "habit-tracker-mvul3sxq",
+      "test-run-official-mvuzipp0"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-10-30T13:25:22.086Z"
+  },
+  {
+    "id": "product-scratch-in-worktree",
+    "role": "product",
+    "trigger": "when writing notes, placeholders or scratch files while drafting the PRD",
+    "lesson": "Keep scratch files inside the run's writable directory and never write to /tmp, because writes outside it are denied and waste a turn.",
+    "confidence": 0.3,
+    "runs": [
+      "habit-tracker-mvul3sxq"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-10-30T06:36:04.873Z"
+  },
+  {
+    "id": "architect-report-unwritable-ui",
+    "role": "architect",
+    "trigger": "when a contract or stub change seems to need a file your role cannot write, such as a UI component",
+    "lesson": "Do not touch or read-probe files your role cannot write, such as UI components; record the needed change as a note in the contract handoff for the owning role.",
+    "confidence": 0.75,
+    "runs": [
+      "habit-tracker-mvul3sxq",
+      "lunch-run-mvupjbsl",
+      "test-run-official-mvuzipp0",
+      "wheels2go-11010804-mvxjnnhl"
+    ],
+    "status": "active",
+    "source": "learned",
+    "updatedAt": "2026-11-01T08:32:41.702Z"
+  },
+  {
+    "id": "dev-no-parent-path-reads",
+    "role": "dev",
+    "trigger": "when a Bash command is denied by the guard as outside your working directory",
+    "lesson": "Do not retry or probe a ../ path that the guard denied as outside your working directory; use only files inside your worktree and report any missing shared file as a concern.",
+    "confidence": 0.3,
+    "runs": [
+      "test-run-official-mvuzipp0"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-10-31T08:02:16.369Z"
+  },
+  {
+    "id": "qa-no-pinned-class-tests",
+    "role": "qa",
+    "trigger": "when writing unit tests for layout or styling changes",
+    "lesson": "Assert behavior or a single source of truth for layout instead of regex-matching exact Tailwind class strings across several files, so a spec change does not invalidate the test.",
+    "confidence": 0.3,
+    "runs": [
+      "test-run-official-mvuzipp0"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-10-31T08:24:59.265Z"
+  },
+  {
+    "id": "architect-fix-lanes-include-shared",
+    "role": "architect",
+    "trigger": "when planning a fix task whose bug may sit in shared contract or helper code",
+    "lesson": "Include the shared file that holds the bug (for example src/shared/booking.ts) in the fix task's lanes instead of leaving it out, because a developer blocked by an out-of-lane file wastes a round.",
+    "confidence": 0.3,
+    "runs": [
+      "test-run-official-mvuzipp0"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-10-31T08:24:59.265Z"
+  },
+  {
+    "id": "architect-no-parent-path-bash",
+    "role": "architect",
+    "trigger": "when a Bash command is denied by the guard as outside your working directory",
+    "lesson": "Do not retry or probe ../ paths the guard denied; read only files inside your working directory and record any missing shared file as a note in the contract handoff.",
+    "confidence": 0.45,
+    "runs": [
+      "test-run-official-mvuzipp0",
+      "wheels2go-11010804-mvxjnnhl"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-11-01T08:32:41.702Z"
+  },
+  {
+    "id": "uiux-bold-high-contrast",
+    "role": "uiux",
+    "trigger": "When choosing the visual direction for a consumer-facing app",
+    "lesson": "Commit to one bold, high-contrast direction: a dark top bar with a single saturated accent used as solid plates (brand mark, prices, active nav, step numbers), a heavy, wide display face for headings, white cards on a light page, and real product photos. Avoid muted or pastel palettes, low-contrast grey-on-grey and anything that reads as a starter template.",
+    "confidence": 0.7,
+    "runs": [
+      "test-run-official",
+      "wheels2go-rehearsal"
+    ],
+    "status": "active",
+    "source": "operator",
+    "updatedAt": "2026-11-01T08:57:44.000Z"
+  },
+  {
+    "id": "uiux-no-clipart",
+    "role": "uiux",
+    "trigger": "When designing heroes, empty states and illustrations",
+    "lesson": "Never draw illustrations (hand-made SVG scenes or clip art) for heroes or empty states: they look amateur. Use the product's own photos (e.g. the seeded listing images) or strong typography alone, and say so in docs/design.md so developers don't add one.",
+    "confidence": 0.7,
+    "runs": [
+      "wheels2go-rehearsal"
+    ],
+    "status": "active",
+    "source": "operator",
+    "updatedAt": "2026-11-01T08:57:44.000Z"
+  },
+  {
+    "id": "dev-same-boundary-both-sides",
+    "role": "dev",
+    "trigger": "when writing a range or overlap check that compares a new request against stored records",
+    "lesson": "Normalize both sides of an overlap comparison to the same boundary convention (end-exclusive or end-inclusive) and check the stored-record side as carefully as the new-request side before reporting DONE.",
+    "confidence": 0.3,
+    "runs": [
+      "wheels2go-11010804-mvxjnnhl"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-11-01T08:32:41.702Z"
+  }
+]

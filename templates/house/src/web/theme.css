@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+/* Design tokens — owned by the UI/UX agent. Components use these via Tailwind theme names. */
+@theme {
+  --color-bg: #0e1116;
+  --color-surface: #161b22;
+  --color-surface-2: #1f2630;
+  --color-border: #2a3340;
+  --color-text: #e6edf3;
+  --color-muted: #8b98a8;
+  --color-accent: #3fb8af;
+  --color-accent-fg: #062523;
+  --color-danger: #f0626a;
+  --color-success: #4cc38a;
+  --radius-card: 14px;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html, body, #root { height: 100%; }
+body { @apply bg-bg text-text font-sans antialiased; }

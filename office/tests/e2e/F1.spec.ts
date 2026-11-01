@@ -1,0 +1,60 @@
+import { test, expect } from "@playwright/test";
+import { boot, CORK } from "./helpers";
+test("F1 replay: tasks() from sample-state, board opens on cork click, rows & chips", async ({ page }) => {
+  await boot(page);
+  const t = await page.evaluate(() => (window as any).__office.tasks());
+  const st = await (await page.request.get("/sample-state.json")).json();
+  expect(t.length).toBe(st.tasks.length);
+  for (const x of t) expect(Object.keys(x)).toEqual(expect.arrayContaining(["id", "title", "status", "attempts"]));
+  // a click on the cork board opens the full-window board with a card per task
+  await page.mouse.click(CORK.x, CORK.y);
+  await expect(page.locator("#kanban")).toBeVisible();
+  await expect(page.locator("#kanban .card")).toHaveCount(t.length);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#kanban")).toBeHidden();
+  await page.evaluate(() => (window as any).__office.openBoard());
+  await expect(page.getByRole("heading", { name: "Task board" })).toBeVisible();
+  const rows = page.locator(".board-row");
+  expect(await rows.count()).toBeGreaterThanOrEqual(t.length);
+  await expect(page.getByText("merged").first()).toBeVisible();
+  const colors = await page.evaluate(() => [...document.querySelectorAll("*")].filter((e) => /^(backlog|running|review|merged|parked)$/.test(e.children.length ? "" : (e.textContent || "").trim())).map((e) => [e.textContent!.trim(), getComputedStyle(e).backgroundColor]));
+  const by = new Map(colors as [string, string][]);
+  expect(new Set(by.values()).size).toBe(by.size);
+});
+test("F1 form: empty title, demo mode, hook", async ({ page }) => {
+  const posts: string[] = [];
+  page.on("request", (r) => r.url().includes("/task") && posts.push(r.url()));
+  await boot(page);
+  await page.evaluate(() => (window as any).__office.openBoard());
+  await expect(page.getByRole("heading", { name: "Task board" })).toBeVisible();
+  await page.getByRole("button", { name: "Add to backlog" }).click();
+  await expect(page.getByText("Title is required")).toBeVisible();
+  await page.getByPlaceholder("Title").fill("Add dark mode");
+  await page.getByPlaceholder("Details").fill("toggle");
+  await page.getByRole("button", { name: "Add to backlog" }).click();
+  await expect(page.getByText("demo mode: not sent")).toBeVisible();
+  expect(posts).toEqual([]);
+});
+test("F1 live: POST /task", async ({ page }) => {
+  let body: any;
+  await page.route("**/task", (r) => { body = r.request().postDataJSON(); r.fulfill({ json: { ok: true } }); });
+  await boot(page, true);
+  await page.evaluate(() => (window as any).__office.openBoard());
+  await page.getByPlaceholder("Title").fill("X");
+  await page.getByPlaceholder("Details").fill("Y");
+  await page.getByRole("button", { name: "Add to backlog" }).click();
+  await expect(page.getByText("queued: the factory picks it up on its next build step")).toBeVisible();
+  expect(body).toEqual({ title: "X", description: "Y" });
+});
+test("F1 rows update while replay plays", async ({ page }) => {
+  test.setTimeout(100000);
+  await boot(page);
+  await page.evaluate(() => (window as any).__office.openBoard());
+  const snap = () => page.evaluate(() => JSON.stringify((window as any).__office.tasks()));
+  await page.keyboard.press("0");
+  const a = await snap();
+  await expect.poll(snap, { timeout: 80000 }).not.toBe(a);
+  const t = await page.evaluate(() => (window as any).__office.tasks());
+  const txt = await page.locator("#hud").innerText();
+  for (const x of t) expect(txt).toContain(x.id);
+});

@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FORGE Architecture Guide</title>
+<style>
+:root{--bg:#f7f5f0;--card:#fff;--ink:#1d1b18;--muted:#625d55;--line:#e2ddd3;--accent:#c2410c;--accent2:#0f766e;--code:#f1ede5;--warn:#9a3412;--ok:#166534}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15130f;--card:#1f1c17;--ink:#ece7dd;--muted:#a59d90;--line:#36312a;--accent:#fb923c;--accent2:#2dd4bf;--code:#29251f;--warn:#fdba74;--ok:#86efac}}
+:root[data-theme="dark"]{--bg:#15130f;--card:#1f1c17;--ink:#ece7dd;--muted:#a59d90;--line:#36312a;--accent:#fb923c;--accent2:#2dd4bf;--code:#29251f;--warn:#fdba74;--ok:#86efac}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 16px 80px}
+header h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px;letter-spacing:-.02em}
+header p{color:var(--muted);margin:0;max-width:760px}
+nav.toc{margin:24px 0;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:10px;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+nav.toc a{color:var(--accent);text-decoration:none}nav.toc a:hover{text-decoration:underline}
+section{margin-top:44px}
+h2{font-size:24px;margin:0 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h2 .n{color:var(--accent);margin-right:8px;font-variant-numeric:tabular-nums}
+h3{font-size:18px;margin:26px 0 6px}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+.diagram{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:14px 0;overflow-x:auto}
+.diagram .mermaid{min-width:640px;text-align:center}
+code,pre{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13.5px}
+code{background:var(--code);padding:1px 5px;border-radius:4px}
+pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow-x:auto;line-height:1.5}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin:10px 0}
+.tbl{overflow-x:auto}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);margin-right:4px}
+.callout{border-left:4px solid var(--accent2);background:var(--card);padding:12px 16px;border-radius:0 10px 10px 0;margin:14px 0}
+.callout.warn{border-left-color:var(--accent)}
+ul,ol{padding-left:22px}li{margin:3px 0}
+.muted{color:var(--muted)}
+footer{margin-top:60px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>FORGE: how the factory works</h1>
+  <p>FORGE is an autonomous software factory. One command takes a written brief and runs a team of AI agents: product, research, architecture, design, parallel developers, review, QA, release review and deploy. It ends with a tested, running app and a report. This page explains the architecture, the order things happen in, why each guardrail exists, and how to operate it.</p>
+</header>
+
+<nav class="toc">
+  <a href="#overview">1 · Overview</a><a href="#arch">2 · Architecture</a><a href="#pipeline">3 · Pipeline</a><a href="#roles">4 · Roles</a>
+  <a href="#seq-run">5 · Sequence: a whole run</a><a href="#worktrees">6 · Worktrees, explained</a><a href="#guards">7 · Guards: why devs can't touch e2e</a>
+  <a href="#seq-task">8 · Sequence: one task</a><a href="#selfcorrect">9 · Self-correction</a><a href="#lessons">10 · Lessons</a>
+  <a href="#office">11 · Console and Office</a><a href="#layout">12 · Run folder</a><a href="#guide">13 · Operator guide</a><a href="#setup">14 · Setup and requirements</a>
+</nav>
+
+<section id="overview">
+  <h2><span class="n">1</span>Overview</h2>
+  <p class="lead">FORGE has a deterministic orchestrator and intelligent workers.</p>
+  <div class="grid2">
+    <div class="card"><b>The orchestrator is ordinary TypeScript</b><br>It decides who works next, gives each worker its files, runs the checks, merges, retries and tracks spend. It makes no model calls itself, so the order of work and the rules are the same on every run.</div>
+    <div class="card"><b>The workers are Claude agents</b><br>Each role (Product, Architect, Developer…) is a Claude Agent SDK session. It gets its own system prompt (<code>roles/*.md</code>), tools, skills, model and budget. Workers communicate only through files in the repo, never in a shared chat.</div>
+    <div class="card"><b>Every decision is visible</b><br>Every action is appended to <code>.forge/events.jsonl</code>. Every judgement call (a ruling) goes into <code>.forge/ledger.md</code>. The Office UI animates the events live, and you can replay them later.</div>
+  </div>
+<pre><code>./forge run samples/briefs/wheels2go.md --budget 20   # brief in, deployed app out
+./forge console                                  # Office UI at http://localhost:4300/office/</code></pre>
+</section>
+
+<section id="arch">
+  <h2><span class="n">2</span>Architecture</h2>
+  <p class="lead">The components and how they connect. Solid arrows are calls; dotted arrows are files and events.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  OP([Operator]) -->|brief.md| CLI[forge CLI<br/>bin/forge.ts]
+  OP -->|browser| OFFICE
+  CLI --> PIPE
+
+  subgraph ORCH[Orchestrator · deterministic TypeScript]
+    PIPE[pipeline.ts<br/>phase runner] --> PH[phases/*<br/>intake → … → report]
+    PH --> DAG[dag.ts<br/>task scheduler]
+    PH --> BUD[budget.ts<br/>per-phase caps]
+    PH --> GATE[checks.ts<br/>typecheck · lint · test]
+    PH --> SEC[security.ts<br/>secret and vuln scan]
+    PH --> GIT[git.ts<br/>worktrees · merge · revert]
+    PH --> AG[agent.ts<br/>Agent SDK wrapper]
+    AG --> GUARD[guard.ts<br/>PreToolUse hooks]
+  end
+
+  AG -->|query| SDK[Claude Agent SDK]
+  SDK -->|HTTPS| API[(Anthropic API<br/>opus · sonnet · haiku)]
+  AG -.loads.-> ROLES[roles/*.md<br/>prompts · tools · model]
+  AG -.copies.-> SK[skills/<br/>per-role skills]
+  AG -.injects.-> LES[lessons/lessons.json]
+  AG -.mcp.-> MCP[context7 · scrapling<br/>researcher only]
+
+  subgraph RUN[Run folder · its own git repo]
+    MAIN[main branch<br/>the product]
+    WT[.forge/wt/T-n<br/>one worktree per task]
+    EV[.forge/events.jsonl<br/>.forge/ledger.md<br/>.forge/state.json]
+  end
+
+  GIT --> MAIN
+  GIT --> WT
+  PH -.writes.-> EV
+  PH -->|deploy| DOCKER[(Docker<br/>forge-&lt;run&gt; container)]
+
+  subgraph CON[Console · forge console]
+    SRV[console/server.ts<br/>HTTP + SSE]
+    ASSIST[assistant.ts<br/>Ask FORGE]
+    DLG[dialogue.ts<br/>handoff scenes · haiku]
+  end
+  EV -.tail.-> SRV
+  SRV -->|SSE events| OFFICE[Office UI<br/>PixiJS pixel office]
+  OFFICE -->|answers · notes · iterate| SRV
+  SRV -.inbox.-> EV
+  </pre></div>
+  <div class="callout"><b>Why the orchestrator is not an LLM:</b> a model deciding "who works next" can drift, loop or forget a step. FORGE keeps the control flow in code: phases, gates, retry limits, budgets and merges. Models are used only for the creative work in each step. That keeps runs reproducible and keeps cost bounded.</div>
+</section>
+
+<section id="pipeline">
+  <h2><span class="n">3</span>The pipeline</h2>
+  <p class="lead">Ten phases, each with a share of the budget. A phase can't start until the one before it has produced its handoff file.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  I[intake<br/>copy template · stack check · attachments · port] --> P
+  P[product · 5%<br/>Product writes PRD → Critic challenges → clarify questions] --> R
+  R[research · 4%<br/>Researcher checks facts, APIs, versions] --> D
+  D[design · 12%<br/>Architect ∥ UI/UX in parallel] --> CG
+  CG[contract_gate · 3%<br/>contracts.ts compiles · tasks valid · lanes do not overlap] --> B
+  B[build · 46%<br/>Developers in parallel worktrees → gate → review → merge] --> Q
+  Q[qa · 18%<br/>QA runs the app, e2e + screenshots, visual score] -->|failures| FIX[fix tasks]
+  FIX --> B
+  Q -->|pass · visual ≥ 8| FR
+  FR[final_review · 6%<br/>whole-product release gate + security scan] -->|blockers| FIX
+  FR --> DEP
+  DEP[deploy · 3%<br/>Docker build + run + health check] --> REP
+  REP[report · 1%<br/>RUN_REPORT.md · Learner updates lessons]
+  </pre></div>
+  <div class="tbl"><table>
+    <tr><th>Phase</th><th>Hands off</th><th>Gate before moving on</th></tr>
+    <tr><td>product</td><td><code>docs/prd.json</code> (features, acceptance, open questions)</td><td>Zod schema; Critic review; optional clarify window for operator answers</td></tr>
+    <tr><td>research</td><td><code>docs/research.md</code></td><td>Facts marked verified or unknown</td></tr>
+    <tr><td>design</td><td><code>docs/architecture.md</code>, <code>docs/design.md</code>, <code>src/shared/contracts.ts</code>, <code>docs/tasks.json</code></td><td>-</td></tr>
+    <tr><td>contract_gate</td><td>frozen contracts</td><td>Typecheck passes, the task graph is acyclic, lanes are valid</td></tr>
+    <tr><td>build</td><td>merged <code>main</code></td><td>Per task: guard, gate, review, merge, then main gate (revert if broken)</td></tr>
+    <tr><td>qa</td><td><code>.forge/qa/round-N.json</code>, e2e specs</td><td>All acceptance passes and visual score ≥ 8; up to 4 rounds, plus 1 polish round</td></tr>
+    <tr><td>final_review</td><td>verdict</td><td>No release blockers</td></tr>
+    <tr><td>deploy</td><td>running container</td><td><code>/api/health</code> responds and <code>/</code> serves HTML</td></tr>
+  </table></div>
+</section>
+
+<section id="roles">
+  <h2><span class="n">4</span>Roles</h2>
+  <p class="lead">Each role is a Markdown file in <code>roles/</code>: frontmatter (model, tools, skills, turn cap) plus the role's instructions. The defaults below can be changed with <code>--model-&lt;role&gt;</code>.</p>
+  <div class="tbl"><table>
+    <tr><th>Role</th><th>Office name</th><th>Model</th><th>Tools</th><th>Job</th></tr>
+    <tr><td>Product</td><td>Erka</td><td>sonnet</td><td>Read, Write</td><td>Turns the brief into a PRD with testable acceptance criteria and open questions</td></tr>
+    <tr><td>Critic</td><td>-</td><td>haiku</td><td>Read</td><td>Pokes holes in the PRD before anything is built</td></tr>
+    <tr><td>Researcher</td><td>Danjila</td><td>sonnet</td><td>Web, context7, scrapling</td><td>Checks APIs, versions and facts; writes "unknown" instead of guessing</td></tr>
+    <tr><td>Architect</td><td>Sunny_Boy</td><td>opus</td><td>Files, Bash</td><td>Freezes the contracts and schema, and splits the work into tasks with file lanes</td></tr>
+    <tr><td>UI/UX</td><td>Selenge</td><td>opus</td><td>Files, Bash</td><td>Design system, tokens and page layouts in <code>docs/design.md</code></td></tr>
+    <tr><td>Developers ×3</td><td>Tuvshu · Anar · Mada</td><td>sonnet (opus on escalation)</td><td>Files, Bash (guarded)</td><td>Each implements one task inside its own worktree</td></tr>
+    <tr><td>Reviewer</td><td>Tuvshu_1</td><td>haiku</td><td>Read, Bash</td><td>Reviews a task's diff against its brief; skipped for diffs under 80 lines (the gate still runs)</td></tr>
+    <tr><td>Integrator</td><td>Ginkhma</td><td>sonnet</td><td>Files, Bash</td><td>Resolves merge conflicts and keeps both sides' intent</td></tr>
+    <tr><td>QA</td><td>Duuree</td><td>sonnet</td><td>Files, Bash, Playwright</td><td>Starts the app on a fresh DB, takes screenshots first, writes e2e, scores the visuals</td></tr>
+    <tr><td>Final reviewer</td><td>Enkee</td><td>sonnet</td><td>Read, Bash</td><td>Release gate over the whole product: security, data integrity, the brief's must-haves</td></tr>
+    <tr><td>DevOps</td><td>Ops</td><td>haiku</td><td>Files, Bash</td><td>Docker build and run, health check</td></tr>
+    <tr><td>Learner</td><td>-</td><td>haiku</td><td>Read</td><td>Turns what went wrong into scored lessons for the next run</td></tr>
+  </table></div>
+</section>
+
+<section id="seq-run">
+  <h2><span class="n">5</span>Sequence: a whole run</h2>
+  <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Op as Operator
+  participant F as Orchestrator
+  participant PM as Product + Critic
+  participant RS as Researcher
+  participant AR as Architect
+  participant UX as UI/UX
+  participant DV as Developers (×3)
+  participant RV as Reviewer
+  participant QA as QA
+  participant FR as Final reviewer
+  participant DO as DevOps
+  participant LN as Learner
+
+  Op->>F: forge run brief.md
+  F->>F: intake: template repo, stack check, port
+  F->>PM: write PRD from brief
+  PM-->>F: prd.json + open questions
+  F-->>Op: questions (Office PRD panel)
+  Op-->>F: answers (or assumptions stand)
+  F->>RS: verify facts
+  RS-->>F: research.md
+  par design in parallel
+    F->>AR: contracts, schema, tasks + lanes
+    F->>UX: design system + layouts
+  end
+  F->>F: contract gate (compile, lanes, DAG)
+  loop each ready task (up to 3 at once)
+    F->>DV: task brief, in worktree t/T-n
+    DV-->>F: DONE / BLOCKED + diff
+    F->>F: gate: typecheck · lint · test
+    F->>RV: review diff (≥ 80 lines)
+    F->>F: merge to main, then main gate
+  end
+  loop QA rounds (max 4)
+    F->>QA: test the running app
+    QA-->>F: report + visual score
+    alt failures
+      F->>DV: fix tasks (back to build)
+    end
+  end
+  F->>FR: release review + security scan
+  F->>DO: docker build + run
+  DO-->>F: healthy on :8800
+  F->>LN: what went wrong?
+  LN-->>F: lessons.json updated
+  F-->>Op: RUN_REPORT.md + app URL
+  </pre></div>
+</section>
+
+<section id="worktrees">
+  <h2><span class="n">6</span>Worktrees, explained</h2>
+  <p class="lead">This is how three developers can write code at the same time without overwriting each other.</p>
+  <div class="card">
+    <p><b>The problem.</b> If three agents edited the same folder at once, one would save <code>App.tsx</code> while another was halfway through editing it. Tests would run against half-written code from someone else, and nobody could tell whose change broke what.</p>
+    <p><b>The fix: a git worktree.</b> A worktree is a second (third, fourth…) checkout of the <i>same</i> git repository in a different folder, each on its own branch. There's one repository and one history, but several working copies. When developer A starts task T-3, the orchestrator runs:</p>
+<pre><code>git worktree add .forge/wt/T-3 -b t/T-3     # a private copy of main, on branch t/T-3</code></pre>
+    <p>Developer A only works in <code>.forge/wt/T-3</code>. Developer B is in <code>.forge/wt/T-4</code>. Neither can see the other's half-finished work. That's intentional, because each task is built and tested against a clean, known-good <code>main</code>.</p>
+    <p><b>Passing work between agents.</b> Agents never hand code to each other directly. The handoff always goes through <code>main</code>:</p>
+    <ol>
+      <li>A finishes, and the orchestrator runs the <b>gate</b> (typecheck, lint, unit tests) <i>inside A's worktree</i>.</li>
+      <li>The Reviewer checks A's diff.</li>
+      <li>The orchestrator <b>merges</b> <code>t/T-3</code> into <code>main</code>. Merges happen one at a time behind a lock.</li>
+      <li>It runs the gate again <b>on main</b>. If main is now broken, that one merge is reverted and A gets the error as feedback.</li>
+      <li>The next task that starts (or a task that has to re-merge) begins from the new main, so it gets A's work.</li>
+    </ol>
+    <p><b>When two tasks touch the same lines</b>, the merge conflicts. The Integrator merges main <i>into</i> the task's worktree, resolves the conflict keeping both intents, re-runs the gate, and then the merge is retried.</p>
+  </div>
+  <div class="diagram"><pre class="mermaid">
+gitGraph
+  commit id: "template"
+  commit id: "contracts frozen"
+  branch t/T-1
+  branch t/T-2
+  branch t/T-3
+  checkout t/T-1
+  commit id: "T-1 db + API"
+  checkout t/T-2
+  commit id: "T-2 catalog UI"
+  checkout t/T-3
+  commit id: "T-3 booking"
+  checkout main
+  merge t/T-1 id: "gate ✓ review ✓"
+  merge t/T-2 id: "gate ✓"
+  checkout t/T-3
+  merge main id: "integrator resolves"
+  checkout main
+  merge t/T-3 id: "main gate ✓"
+  </pre></div>
+  <div class="callout"><b>Why it works without agents talking to each other:</b> before any developer starts, the Architect freezes the <b>contracts</b> (<code>src/shared/contracts.ts</code>: the API types, the DB schema, the routes). Each developer codes against those agreed types. Two developers who never met still produce pieces that fit, the same way two companies can build to one published API.</div>
+</section>
+
+<section id="guards">
+  <h2><span class="n">7</span>Guards: why a developer can't touch e2e tests (and other files)</h2>
+  <p class="lead">Every file write and shell command an agent attempts first goes through <code>guard.ts</code>, a PreToolUse hook. If it isn't allowed, the tool call is denied with a reason before anything happens on disk.</p>
+  <div class="grid2">
+    <div class="card"><b>1. Stay in your own folder</b><br>A developer may only write inside its own worktree. Paths with <code>../</code>, absolute paths elsewhere, or a <code>cd</code> out are denied. Otherwise one agent could edit another agent's worktree, or your machine.</div>
+    <div class="card"><b>2. Stay in your lanes</b><br>Each task has <b>lanes</b>: the globs it owns, for example <code>src/web/catalog/**</code>. The architect assigns lanes that don't overlap, so parallel tasks rarely conflict. Touched read-only files are also restored before the merge.</div>
+    <div class="card"><b>3. Never edit the referee</b><br>These are <b>core-protected</b> for every developer, always: <code>tests/e2e/**</code>, <code>tests/acceptance/**</code>, <code>docs/**</code>, <code>.forge/**</code>, <code>src/shared/contracts.ts</code>, <code>CLAUDE.md</code>.</div>
+  </div>
+  <h3>Why e2e tests in particular</h3>
+  <p>The e2e and acceptance tests are QA's proof that the product does what the PRD promised. If the developer whose code is being tested could also edit those tests, the easy way out of a failing test would be to weaken or delete it. The test would pass and the feature would still be broken. (Models really do this under pressure: "fix the test" is easier than "fix the bug".)</p>
+  <p>So the people who write the code never write its exam. QA owns e2e, the Architect owns contracts, and Product owns the PRD. A developer who thinks a test or contract is wrong reports <code>BLOCKED</code> with the reason. The orchestrator then decides; it might widen a fix task's lanes once or send the note back. A developer never quietly changes the rules.</p>
+  <h3>The other protected files</h3>
+  <div class="tbl"><table>
+    <tr><th>File</th><th>Why a developer can't change it</th></tr>
+    <tr><td><code>src/shared/contracts.ts</code></td><td>The agreement every parallel developer codes against. Changing it in one worktree breaks the others when they merge.</td></tr>
+    <tr><td><code>docs/**</code> (PRD, design, tasks)</td><td>These are the spec. Changes come from the operator (<code>forge iterate</code> change requests), not from the builder.</td></tr>
+    <tr><td><code>.forge/**</code></td><td>The orchestrator's own state, ledger and budget. An agent must not be able to edit its own score.</td></tr>
+    <tr><td><code>package.json</code>, configs, <code>schema.ts</code></td><td>Read-only <i>unless</i> the task's lanes explicitly include them. That stops dependency drift from three developers adding packages at once.</td></tr>
+  </table></div>
+  <div class="callout warn"><b>What the guard is not:</b> it isn't a security sandbox against a malicious model. It keeps well-meaning agents in their own work, so mistakes stay small and can be traced. Docker and the deterministic gates are the second line.</div>
+</section>
+
+<section id="seq-task">
+  <h2><span class="n">8</span>Sequence: the life of one task</h2>
+  <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant O as Orchestrator
+  participant W as Worktree t/T-3
+  participant D as Developer
+  participant G as Guard hook
+  participant R as Reviewer
+  participant M as main
+  participant I as Integrator
+
+  O->>W: git worktree add (from main)
+  O->>D: task brief + lanes + context pack + lessons
+  loop every tool call
+    D->>G: Write src/web/x.tsx / Bash "npm test"
+    alt inside worktree and lanes, not protected
+      G-->>D: allow
+    else outside, protected, or ../
+      G-->>D: deny + reason
+    end
+  end
+  D-->>O: {status: DONE | BLOCKED}
+  O->>W: restore any touched read-only files
+  alt BLOCKED and empty diff
+    O-->>D: fix task: widen lanes once, retry
+  end
+  O->>W: gate (typecheck · lint · test)
+  alt gate fails
+    O-->>D: failure as feedback (attempt n+1, opus after repeats)
+  end
+  O->>R: review diff
+  O->>M: merge t/T-3 (merge lock)
+  alt conflict
+    O->>I: merge main into worktree, resolve
+    I-->>O: resolved, gate again
+    O->>M: merge again
+  end
+  O->>M: gate on main
+  alt main broken
+    O->>M: revert this merge only
+    O-->>D: feedback: main broke after your merge
+  end
+  O->>W: remove worktree, status merged
+  </pre></div>
+</section>
+
+<section id="selfcorrect">
+  <h2><span class="n">9</span>Self-correction: every loop that fixes its own mistakes</h2>
+  <div class="tbl"><table>
+    <tr><th>Loop</th><th>Trigger</th><th>What happens</th><th>Limit</th></tr>
+    <tr><td>Dev retry</td><td>Gate or review fails</td><td>The exact failure output goes back to the same task as feedback</td><td>3 attempts</td></tr>
+    <tr><td>Escalation</td><td>Same failure signature repeats</td><td>The task is re-run on <b>opus</b></td><td>2 escalations, then parked</td></tr>
+    <tr><td>Lane widening</td><td>Fix task BLOCKED with an empty diff</td><td>Lanes widened to <code>src/**</code> once, ruling recorded</td><td>Once per task</td></tr>
+    <tr><td>Main revert</td><td>Main gate fails after a merge</td><td>Only that merge is reverted; the dev gets the breakage as feedback</td><td>-</td></tr>
+    <tr><td>Conflict integration</td><td>Merge conflict</td><td>The Integrator resolves it in the worktree, then the gate runs again</td><td>-</td></tr>
+    <tr><td>QA fix rounds</td><td>QA failures or visual score &lt; 8</td><td>Each issue becomes a fix task with suspected files; build reopens</td><td>4 rounds</td></tr>
+    <tr><td>Visual re-ask</td><td>QA report missing the visual score</td><td>Same QA session resumed once to add it</td><td>Once</td></tr>
+    <tr><td>Polish round</td><td>QA passed with minor issues left</td><td>One more fix round if budget allows</td><td>Once</td></tr>
+    <tr><td>Final review</td><td>Release blockers</td><td>Blockers become fix tasks</td><td>-</td></tr>
+    <tr><td>Systemic halt</td><td>Many tasks fail the same way</td><td>Build stops instead of burning budget</td><td>-</td></tr>
+    <tr><td>Cross-run lessons</td><td>Anything that went wrong</td><td>The Learner writes a scored lesson for the next run</td><td>see §10</td></tr>
+  </table></div>
+</section>
+
+<section id="lessons">
+  <h2><span class="n">10</span>Lessons: learning across runs</h2>
+  <p>After every run the Learner reads what failed (gate failures, guard denials, QA findings, rulings) and adds or reinforces short lessons in <code>lessons/lessons.json</code>, for example <i>"Never put tests/e2e/** in a dev task's lanes."</i> Each lesson has a role, a trigger, a <b>confidence</b> score and the runs it came from.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  E[run events<br/>failures · denials · QA] --> L[Learner · haiku]
+  L -->|new or reinforce| J[(lessons.json)]
+  J -->|confidence ≥ 0.5| P[injected into that role's<br/>system prompt next run]
+  J -->|≥ 0.85 and seen in 3+ runs| PR[forge lessons promote<br/>→ written into roles/*.md]
+  J -->|proven wrong| RT[retired · confidence lowered]
+  </pre></div>
+  <p class="muted">Lessons ship with the repo: it's the factory's memory, and each entry shows which run it was learned from.</p>
+</section>
+
+<section id="office">
+  <h2><span class="n">11</span>Console and Office</h2>
+  <p><code>forge console</code> starts a localhost server. It lists runs, streams each run's <code>events.jsonl</code> over Server-Sent Events, and serves the Office, a PixiJS pixel office where every role is a character at a desk.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  EV[(events.jsonl)] -->|tail| S[console server]
+  S -->|SSE| DIR[director.ts<br/>event → commands]
+  DIR --> ST[stage.ts<br/>walks · bubbles · stamps]
+  DIR --> KB[kanban.ts<br/>board · handoffs · timeline]
+  DIR --> DL[dialogue.ts<br/>handoff scenes]
+  DL -->|/api/dialogue| HK[haiku, cached per run]
+  DIR --> SD[sound.ts<br/>SFX · music · finish song]
+  UI[PRD panel · notes · New job · Ask FORGE] -->|POST| S
+  S -->|inbox| ORC[orchestrator picks up<br/>answers · notes · iterate]
+  </pre></div>
+  <ul>
+    <li><b>Live or replay:</b> any finished run replays from its event log at 1×, 4× or 10×. With no console, the Office replays a bundled sample run.</li>
+    <li><b>Operator input</b> goes in through files (an inbox) that the orchestrator reads between steps. The UI never touches the run directly.</li>
+    <li><b>Cost separation:</b> handoff dialogue is billed to <code>.forge/dialogue-usage.json</code>, outside the build budget.</li>
+  </ul>
+</section>
+
+<section id="layout">
+  <h2><span class="n">12</span>What's in a run folder</h2>
+<pre><code>~/forge-runs/&lt;run&gt;/
+├─ src/ …                    the product (main branch)
+├─ docs/  brief.md · prd.json · research.md · architecture.md · design.md · tasks.json · RUN_REPORT.md
+├─ tests/ unit/ · e2e/ (QA-owned) · acceptance/
+├─ Dockerfile · package.json · CLAUDE.md
+└─ .forge/
+   ├─ state.json            phase, tasks, spend, change requests
+   ├─ events.jsonl          every agent action (what the Office plays)
+   ├─ ledger.md             rulings and notes, in order
+   ├─ qa/round-N.json       QA reports + screenshots
+   ├─ wt/T-n/               live worktrees (removed after merge)
+   └─ dialogue.json         cached handoff scenes</code></pre>
+</section>
+
+<section id="guide">
+  <h2><span class="n">13</span>Operator guide</h2>
+  <div class="tbl"><table>
+    <tr><th>Command</th><th>Use</th></tr>
+    <tr><td><code>forge run &lt;brief.md&gt; [--budget USD] [--concurrency N]</code></td><td>Start a run. Prints the run folder.</td></tr>
+    <tr><td><code>forge console [--port 4300]</code></td><td>Office UI for all runs. Answer PRD questions and send notes from here.</td></tr>
+    <tr><td><code>forge status &lt;dir&gt;</code> / <code>forge stop &lt;dir&gt;</code></td><td>Check progress / stop cleanly at the next checkpoint.</td></tr>
+    <tr><td><code>forge resume &lt;dir&gt; [--budget USD] [--retry-parked]</code></td><td>Continue a stopped or finished run.</td></tr>
+    <tr><td><code>forge iterate &lt;dir&gt; "change 1" "change 2" [--lanes "src/**"]</code></td><td>Operator change requests: they become fix tasks and override the PRD for QA and review. Then <code>resume</code>.</td></tr>
+    <tr><td><code>forge report &lt;dir&gt;</code></td><td>Regenerate RUN_REPORT.md.</td></tr>
+    <tr><td><code>forge lessons [promote &lt;id&gt;]</code></td><td>Inspect lessons; promote a proven one into its role file.</td></tr>
+  </table></div>
+  <h3>On the day</h3>
+  <ol>
+    <li>Start <code>forge console</code> first and open the Office. Click once anywhere so the browser allows sound.</li>
+    <li><code>forge run brief.md --budget 20</code>.</li>
+    <li>When Product's questions appear in the PRD panel, answer them all in one message (for example, rental days count <b>nights</b>).</li>
+    <li>Leave it alone. Every manual intervention counts against autonomy.</li>
+    <li>When it finishes, the app is on the brief's port (default 8800) and the report is in <code>docs/RUN_REPORT.md</code>.</li>
+  </ol>
+</section>
+
+<section id="setup">
+  <h2><span class="n">14</span>Setup and requirements</h2>
+  <div class="tbl"><table>
+    <tr><th>Need</th><th>Why</th><th>Check</th></tr>
+    <tr><td>Node ≥ 24</td><td>Orchestrator runs TypeScript directly (tsx)</td><td><code>node -v</code></td></tr>
+    <tr><td><code>ANTHROPIC_API_KEY</code> in <code>.env</code></td><td>Every agent is a Claude call; no local model is used. <code>./forge</code> loads <code>.env</code> on every command (an exported shell variable wins)</td><td><code>grep -c ANTHROPIC_API_KEY= .env</code></td></tr>
+    <tr><td>git</td><td>Worktrees and merges</td><td><code>git --version</code></td></tr>
+    <tr><td>Docker (running)</td><td>Deploy phase. Without it, the app is still built and tested but not containerised</td><td><code>docker info</code></td></tr>
+    <tr><td>Playwright Chromium</td><td>QA e2e and screenshots</td><td><code>npx playwright install chromium</code></td></tr>
+    <tr><td>Optional: Python 3.10+ and Scrapling</td><td>Researcher's stealth web fetch; falls back to built-in WebFetch</td><td><code>scrapling-mcp --help</code></td></tr>
+  </table></div>
+<pre><code>git clone &lt;repo&gt; forge &amp;&amp; cd forge
+npm ci &amp;&amp; (cd office &amp;&amp; npm ci &amp;&amp; npm run build)
+npx playwright install chromium
+cp .env.example .env            # put ANTHROPIC_API_KEY=sk-ant-… in .env (git-ignored)
+./forge run samples/briefs/wheels2go.md --budget 20</code></pre>
+</section>
+
+<footer>FORGE · Agentic Software Factory · ZeroTech hackathon 2026. Diagrams are rendered with Mermaid.</footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+const dark = document.documentElement.dataset.theme === "dark" || (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "neutral", securityLevel: "strict", flowchart: { htmlLabels: true, curve: "basis" }, sequence: { mirrorActors: false } });
+</script>
+</body>
+</html>

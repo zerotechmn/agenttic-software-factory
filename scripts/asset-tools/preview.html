@@ -1,0 +1,11 @@
+<!doctype html><body style="margin:0;background:#2b2b2b"><canvas id=c width=1500 height=900></canvas><script>
+const S=5, g=document.getElementById("c").getContext("2d"); g.imageSmoothingEnabled=false; g.font="13px monospace";
+const load=(s)=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=s;});
+(async()=>{ const a=await (await fetch("atlas.json")).json(); const sh={indoor:await load("indoor.png"),chars:await load("chars.png")};
+ const tile=(img,[c,r],x,y)=>g.drawImage(img,c*17,r*17,16,16,x,y,16*S,16*S);
+ g.fillStyle="#ff0"; g.fillText("CHARACTERS (body+pants+shirt+hair)",20,20); let x=20;
+ for(const [role,ch] of Object.entries(a.characters)){ for(const l of a.characterLayers.order) tile(sh.chars,ch[l],x,30); g.fillStyle="#fff"; g.fillText(ch.name,x,30+16*S+16); g.fillText(role.slice(0,9),x,30+16*S+32); x+=16*S+60; }
+ g.fillStyle="#ff0"; g.fillText("FURNITURE",20,190+16*S-60); let fx=20, fy=230; 
+ for(const [name,f] of Object.entries(a.furniture)){ const w=f.w||f.tiles.length, h=Math.ceil(f.tiles.length/w); if(fx+w*16*S>1480){fx=20;fy+=2*16*S+40;}
+   f.tiles.forEach((t,i)=>tile(sh[f.sheet],t,fx+(i%w)*16*S,fy+Math.floor(i/w)*16*S)); g.fillStyle="#fff"; g.fillText(name,fx,fy+h*16*S+14); fx+=w*16*S+30; }
+ document.title="done"; })(); </script></body>

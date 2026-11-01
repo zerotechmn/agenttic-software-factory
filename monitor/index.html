@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FORGE Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #07090d; --panel: #0e1218; --panel-2: #141a22; --line: #1f2733; --text: #e7edf5; --muted: #7d8a9c;
+    --accent: #ff7a3d; --accent-2: #ffb547; --ok: #3ddc97; --bad: #ff5d6c; --warn: #ffc94d; --info: #5cc8ff; --violet: #b18cff;
+    --r: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 Inter, system-ui, sans-serif; }
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background: radial-gradient(1200px 500px at 15% -10%, rgba(255,122,61,.13), transparent 60%),
+                radial-gradient(900px 500px at 110% 10%, rgba(92,200,255,.08), transparent 60%); }
+  .wrap { position: relative; z-index: 1; max-width: 1480px; margin: 0 auto; padding: 18px 20px 40px; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .14em; font-size: 15px; }
+  .logo .mark { width: 28px; height: 28px; border-radius: 8px; background: conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--accent));
+    box-shadow: 0 0 24px rgba(255,122,61,.45); position: relative; animation: glow 3s ease-in-out infinite; }
+  .logo .mark::after { content: ""; position: absolute; inset: 7px; border-radius: 3px; background: var(--bg); }
+  .product { font-size: 20px; font-weight: 600; }
+  .pill { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font-size: 12px; }
+  .pill.live { color: var(--ok); border-color: rgba(61,220,151,.35); }
+  .pill.live::before { content: "●"; margin-right: 6px; animation: blink 1.4s infinite; }
+  .pill.landing { color: var(--warn); border-color: rgba(255,201,77,.4); }
+  .spacer { flex: 1; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; min-width: 104px; }
+  .stat b { display: block; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+
+  .rail { margin: 18px 0 16px; display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+  .ph { position: relative; padding: 10px 10px 9px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); overflow: hidden; transition: border-color .4s, box-shadow .4s; }
+  .ph .n { font-size: 10px; color: var(--muted); letter-spacing: .1em; }
+  .ph .t { font-size: 12.5px; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ph.done { border-color: rgba(61,220,151,.3); }
+  .ph.done .t { color: var(--ok); }
+  .ph.active { border-color: rgba(255,122,61,.6); box-shadow: 0 0 0 1px rgba(255,122,61,.25), 0 8px 30px -12px rgba(255,122,61,.6); }
+  .ph.active::after { content: ""; position: absolute; bottom: 0; height: 2px; width: 40%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent); animation: sweep 1.6s linear infinite; }
+  .ph.active .t { color: var(--accent-2); }
+
+  .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px; }
+  .panel { background: linear-gradient(180deg, var(--panel), #0b0f14); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; min-width: 0; }
+  .panel h2 { margin: 0 0 10px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+  .panel h2 .count { color: var(--text); background: var(--panel-2); border-radius: 6px; padding: 0 6px; letter-spacing: 0; }
+
+  .agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .agent { position: relative; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; background: var(--panel-2); overflow: hidden; animation: pop .35s ease; }
+  .agent::before { content: ""; position: absolute; inset: 0; border-radius: 12px; padding: 1px; pointer-events: none;
+    background: conic-gradient(from var(--a), transparent 0 65%, var(--c, var(--accent)) 85%, transparent 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: spin 2.4s linear infinite; }
+  .agent::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(240px 80px at 0% 0%, color-mix(in srgb, var(--c) 14%, transparent), transparent); }
+  .agent .top { display: flex; align-items: center; gap: 8px; }
+  .agent .role { font-weight: 600; text-transform: capitalize; }
+  .agent .model { margin-left: auto; font-size: 11px; color: var(--muted); }
+  .agent .task { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .agent .tool { margin-top: 8px; font-size: 11.5px; color: #c7d2e0; background: #0a0e13; border-radius: 7px; padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .agent .meta { margin-top: 7px; display: flex; gap: 10px; font-size: 11px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--accent)); box-shadow: 0 0 10px var(--c, var(--accent)); animation: blink 1.2s infinite; }
+  .empty { color: var(--muted); font-size: 13px; padding: 18px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
+
+  .kanban { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  .col { background: #0a0e13; border: 1px solid var(--line); border-radius: 11px; padding: 8px; min-height: 120px; }
+  .col h3 { margin: 0 0 8px; font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; display: flex; justify-content: space-between; }
+  .card { border-radius: 9px; padding: 8px 9px; background: var(--panel-2); border: 1px solid var(--line); margin-bottom: 6px; animation: pop .3s ease; }
+  .card .id { font-size: 10.5px; color: var(--muted); }
+  .card .ti { font-size: 12.5px; font-weight: 500; margin-top: 2px; }
+  .card .tags { margin-top: 5px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .tag { font-size: 10px; padding: 1px 6px; border-radius: 5px; background: #0a0e13; color: var(--muted); border: 1px solid var(--line); }
+  .tag.fix { color: var(--warn); border-color: rgba(255,201,77,.35); }
+  .tag.esc { color: var(--violet); border-color: rgba(177,140,255,.35); }
+  .card.running { border-color: rgba(255,122,61,.55); box-shadow: 0 0 18px -8px var(--accent); }
+  .card.review { border-color: rgba(92,200,255,.5); }
+  .card.merged { border-color: rgba(61,220,151,.35); }
+  .card.parked { opacity: .6; border-style: dashed; }
+
+  .bars .row { display: grid; grid-template-columns: 110px 1fr 64px; gap: 8px; align-items: center; margin: 6px 0; font-size: 12px; }
+  .bars .track { height: 8px; background: #0a0e13; border-radius: 99px; overflow: hidden; }
+  .bars .fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+  .budget { height: 10px; border-radius: 99px; background: #0a0e13; overflow: hidden; margin: 6px 0 4px; }
+  .budget > div { height: 100%; background: linear-gradient(90deg, var(--ok), var(--warn) 75%, var(--bad)); transition: width .6s ease; }
+  svg.spark { width: 100%; height: 76px; }
+  .features { display: grid; gap: 5px; }
+  .feat { display: flex; gap: 8px; align-items: center; font-size: 12.5px; }
+  .feat .pri { font-size: 10px; width: 46px; text-align: center; border-radius: 5px; padding: 1px 0; background: #0a0e13; border: 1px solid var(--line); color: var(--muted); flex: none; }
+  .feat .pri.must { color: var(--accent-2); border-color: rgba(255,181,71,.35); }
+  .feat .st { margin-left: auto; }
+
+  .feed { max-height: 300px; overflow: auto; display: flex; flex-direction: column; gap: 3px; }
+  .ev { display: grid; grid-template-columns: 62px 96px 1fr; gap: 8px; font-size: 11.5px; padding: 4px 6px; border-radius: 6px; animation: slide .3s ease; }
+  .ev:hover { background: var(--panel-2); }
+  .ev .tm { color: var(--muted); }
+  .ev .k { color: var(--info); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev .x { color: #c7d2e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev.bad .k { color: var(--bad); } .ev.good .k { color: var(--ok); } .ev.rule .k { color: var(--violet); } .ev.warn .k { color: var(--warn); }
+  .ruling { border-left: 2px solid var(--violet); background: rgba(177,140,255,.06); padding: 7px 9px; border-radius: 0 8px 8px 0; font-size: 12px; animation: slide .3s ease; }
+  .ruling .tm { color: var(--muted); font-size: 10.5px; }
+  .stack { display: grid; gap: 16px; align-content: start; }
+
+  @property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  @keyframes spin { to { --a: 360deg; } }
+  @keyframes sweep { from { left: -40%; } to { left: 100%; } }
+  @keyframes blink { 50% { opacity: .35; } }
+  @keyframes glow { 50% { box-shadow: 0 0 34px rgba(255,122,61,.7); } }
+  @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes slide { from { transform: translateY(-4px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } .rail { grid-template-columns: repeat(3, 1fr); } .kanban { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .wrap { padding: 12px 16px 30px; } .rail { grid-template-columns: repeat(2, 1fr); } .kanban { grid-template-columns: 1fr; } .stat { min-width: 0; flex: 1 1 40%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><div class="mark"></div>FORGE</div>
+    <div class="product" id="product">waiting for run…</div>
+    <span class="pill live" id="live">connecting</span>
+    <span class="pill landing" id="landing" hidden>landing mode</span>
+    <div class="spacer"></div>
+    <div class="stats">
+      <div class="stat"><span>Spend</span><b id="spend">$0.00</b></div>
+      <div class="stat"><span>Elapsed</span><b id="elapsed">0m</b></div>
+      <div class="stat"><span>Merged</span><b id="merged">0/0</b></div>
+      <div class="stat"><span>Agent calls</span><b id="calls">0</b></div>
+      <div class="stat"><span>Self-fixes</span><b id="fixes">0</b></div>
+      <div class="stat"><span>Local model</span><b id="local">0%</b></div>
+    </div>
+  </header>
+
+  <div class="rail" id="rail"></div>
+
+  <div class="grid">
+    <div class="stack">
+      <section class="panel"><h2>Live agents <span class="count" id="agentCount">0</span></h2><div class="agents" id="agents"></div></section>
+      <section class="panel"><h2>Task board</h2><div class="kanban" id="kanban"></div></section>
+      <section class="panel"><h2>Event stream</h2><div class="feed" id="feed"></div></section>
+    </div>
+    <div class="stack">
+      <section class="panel">
+        <h2>Budget</h2>
+        <div class="budget"><div id="budgetFill" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12px"><span id="budgetTxt">$0 of $0</span><span id="budgetPct">0%</span></div>
+        <div class="bars" id="roles" style="margin-top:10px"></div>
+      </section>
+      <section class="panel"><h2>Quality · QA score per round</h2><svg class="spark" id="spark" viewBox="0 0 300 76" preserveAspectRatio="none"></svg><div id="qaTxt" style="color:var(--muted);font-size:12px"></div></section>
+      <section class="panel"><h2>Features</h2><div class="features" id="features"></div></section>
+      <section class="panel"><h2>Rulings · decisions made autonomously <span class="count" id="rulingCount">0</span></h2><div class="feed" id="rulings" style="gap:7px"></div></section>
+    </div>
+  </div>
+</div>
+<script>
+const PHASES = ["intake","product","research","design","contract_gate","build","qa","final_review","deploy","report"];
+const LABEL = { intake:"Intake", product:"Product", research:"Research", design:"Architect + UI/UX", contract_gate:"Contract gate", build:"Parallel build", qa:"QA loop", final_review:"Final review", deploy:"Deploy", report:"Report" };
+const ROLE_COLOR = { product:"#ffb547", researcher:"#7ad7ff", architect:"#b18cff", uiux:"#ff7ac8", dev:"#ff7a3d", reviewer:"#5cc8ff", integrator:"#7af0ff", qa:"#3ddc97", final_reviewer:"#c49bff", devops:"#9be15d" };
+const COLS = [["backlog","Backlog"],["running","Building"],["review","Gate · review"],["merged","Merged"],["parked","Parked"]];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const fmt$ = (n) => "$" + (n || 0).toFixed(2);
+const tm = (ts) => new Date(ts).toTimeString().slice(0, 8);
+
+let state = null; const agents = new Map(); let calls = 0, fixes = 0;
+
+function taskTitle(id) { return state?.tasks?.find((t) => t.id === id)?.title || ""; }
+function renderRail() {
+  const cur = state?.phase, done = new Set(state?.done || []);
+  $("rail").innerHTML = PHASES.map((p, i) => `<div class="ph ${done.has(p) ? "done" : ""} ${cur === p ? "active" : ""}"><div class="n">0${i + 1}</div><div class="t">${done.has(p) ? "✓ " : ""}${LABEL[p]}</div></div>`).join("");
+}
+function renderAgents() {
+  const list = [...agents.values()];
+  $("agentCount").textContent = list.length;
+  $("agents").innerHTML = list.length ? list.map((a) => `
+    <div class="agent" style="--c:${ROLE_COLOR[a.role] || "#ff7a3d"}">
+      <div class="top"><span class="dot"></span><span class="role">${esc(a.role.replace("_", " "))}</span><span class="model mono">${esc(a.model || "")}</span></div>
+      <div class="task">${esc(a.taskId ? a.taskId + " · " + taskTitle(a.taskId) : "")}</div>
+      <div class="tool mono">${esc(a.tool || "thinking…")}</div>
+      <div class="meta"><span>${a.tools} tool calls</span><span>${Math.max(0, Math.round((Date.now() - a.start) / 1000))}s</span></div>
+    </div>`).join("") : `<div class="empty">No agent is running right now.</div>`;
+}
+function renderKanban() {
+  const tasks = state?.tasks || [];
+  $("kanban").innerHTML = COLS.map(([k, label]) => {
+    const items = tasks.filter((t) => (k === "backlog" ? ["backlog", "ready", "blocked"].includes(t.status) : t.status === k));
+    return `<div class="col"><h3>${label}<span>${items.length}</span></h3>${items.map((t) => `
+      <div class="card ${t.status}"><div class="id mono">${esc(t.id)}${t.attempts ? ` · try ${t.attempts}` : ""}</div><div class="ti">${esc(t.title)}</div>
+      <div class="tags">${t.kind === "fix" ? '<span class="tag fix">fix</span>' : ""}${t.escalated ? '<span class="tag esc">escalated</span>' : ""}${(t.featureIds || []).map((f) => `<span class="tag">${esc(f)}</span>`).join("")}</div></div>`).join("")}</div>`;
+  }).join("");
+  $("merged").textContent = `${tasks.filter((t) => t.status === "merged").length}/${tasks.length}`;
+}
+function renderSpend() {
+  const s = state?.spend || { usd: 0, byRole: {} }, budget = state?.budgetUsd || 0;
+  $("spend").textContent = fmt$(s.usd);
+  const pct = budget ? Math.min(100, (100 * s.usd) / budget) : 0;
+  $("budgetFill").style.width = pct + "%";
+  $("budgetTxt").textContent = `${fmt$(s.usd)} of ${fmt$(budget)}`;
+  $("budgetPct").textContent = Math.round(pct) + "%";
+  const roles = Object.entries(s.byRole || {}).filter(([k, v]) => v > 0 && k !== "local").sort((a, b) => b[1] - a[1]);
+  const max = Math.max(0.0001, ...roles.map((r) => r[1]));
+  $("roles").innerHTML = roles.map(([k, v]) => `<div class="row"><span>${esc(k.replace("_", " "))}</span><div class="track"><div class="fill" style="width:${(100 * v) / max}%;background:${ROLE_COLOR[k] || "var(--accent)"}"></div></div><span class="mono" style="text-align:right">${fmt$(v)}</span></div>`).join("");
+  const tot = (s.local || 0) + (s.remote || 0);
+  $("local").textContent = tot ? Math.round((100 * (s.local || 0)) / tot) + "%" : "0%";
+  if (state?.startedAt) $("elapsed").textContent = Math.round((Date.now() - state.startedAt) / 60000) + "m";
+}
+function renderQa() {
+  const r = state?.qaRounds || [];
+  const w = 300, h = 76, y = (v) => h - 8 - (v / 10) * (h - 16);
+  const pts = r.map((x, i) => [r.length === 1 ? w / 2 : 12 + (i * (w - 24)) / (r.length - 1), y(x.score)]);
+  const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  $("spark").innerHTML = `<line x1="0" x2="${w}" y1="${y(7)}" y2="${y(7)}" stroke="#3ddc97" stroke-opacity=".4" stroke-dasharray="4 4"/>` +
+    (pts.length > 1 ? `<path d="${line} L${pts.at(-1)[0]} ${h} L${pts[0][0]} ${h} Z" fill="rgba(255,122,61,.10)"/>` : "") +
+    (pts.length ? `<path d="${line}" fill="none" stroke="#ff7a3d" stroke-width="2.5" stroke-linejoin="round"/>` + pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="${r[i].score >= 7 ? "#3ddc97" : "#ffb547"}"/>`).join("") : "");
+  $("qaTxt").textContent = r.length ? r.map((x) => `R${x.round}: ${x.score}/10 (${x.failures} failures)`).join(" · ") + " · pass line 7" : "QA has not run yet.";
+}
+function renderFeatures() {
+  const f = state?.prd?.features || [];
+  $("features").innerHTML = f.length ? f.map((x) => `<div class="feat"><span class="pri ${x.priority}">${x.priority}</span><span class="mono" style="color:var(--muted)">${esc(x.id)}</span><span>${esc(x.title)}</span><span class="st">${x.passes ? "✅" : "⬜"}</span></div>`).join("") : `<div class="empty">PRD not written yet.</div>`;
+  if (state?.prd?.product) { $("product").textContent = state.prd.product; document.title = state.prd.product + " · FORGE"; }
+}
+function renderAll() { renderRail(); renderAgents(); renderKanban(); renderSpend(); renderQa(); renderFeatures(); $("landing").hidden = !state?.landing; }
+
+function addEvent(e) {
+  if (e.kind === "say") return;
+  const cls = e.kind === "ruling" ? "rule" : /fail|error/.test(e.kind) || e.status === "fail" ? "bad" : ["merged", "pass", "ok", "approve"].includes(e.status) || e.kind === "run_done" ? "good" : ["landing", "guard_deny", "retry", "conflict"].includes(e.kind) ? "warn" : "";
+  const el = document.createElement("div");
+  el.className = "ev " + cls;
+  el.innerHTML = `<span class="tm mono">${tm(e.ts)}</span><span class="k mono">${esc(e.kind)}</span><span class="x">${esc((e.agentId ? e.agentId + "  " : e.taskId ? e.taskId + "  " : "") + (e.text || e.status || ""))}</span>`;
+  $("feed").prepend(el);
+  while ($("feed").children.length > 400) $("feed").lastChild.remove();
+  if (e.kind === "ruling") {
+    const r = document.createElement("div");
+    r.className = "ruling";
+    r.innerHTML = `<div class="tm mono">${tm(e.ts)} · ${esc(e.phase)}${e.taskId ? " · " + esc(e.taskId) : ""}</div>${esc((e.text || "").replace(/^RULING:\s*/, ""))}`;
+    $("rulings").prepend(r);
+    $("rulingCount").textContent = $("rulings").children.length;
+  }
+}
+function onEvent(e) {
+  if (e.kind === "agent_start") { agents.set(e.agentId, { role: e.role, model: e.model, taskId: e.taskId, start: e.ts, tools: 0 }); calls++; }
+  else if (e.kind === "tool" && agents.has(e.agentId)) { const a = agents.get(e.agentId); a.tool = e.text; a.tools++; }
+  else if (e.kind === "agent_done") agents.delete(e.agentId);
+  else if (e.kind === "task_fail") fixes++;
+  else if (["run_done", "stopped", "run_error"].includes(e.kind)) agents.clear();
+  if (state && e.kind === "phase_start") state.phase = e.phase;
+  $("calls").textContent = calls; $("fixes").textContent = fixes;
+  addEvent(e);
+}
+async function refresh() {
+  try { const s = await (await fetch("/state")).json(); if (s && s.run) { state = s; renderAll(); } } catch {}
+}
+const src = new EventSource("/events");
+src.onmessage = (m) => onEvent(JSON.parse(m.data));
+src.onopen = () => { $("live").textContent = "live"; };
+src.onerror = () => { $("live").textContent = "reconnecting"; };
+setInterval(refresh, 2000);
+setInterval(() => { renderAgents(); renderSpend(); }, 1000);
+refresh();
+</script>
+</body>
+</html>
