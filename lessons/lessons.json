@@ -276,5 +276,44 @@
     "status": "candidate",
     "source": "learned",
     "updatedAt": "2026-11-01T08:32:41.702Z"
+  },
+  {
+    "id": "architect-cookie-secure-opt-in",
+    "role": "architect",
+    "trigger": "When writing session or auth cookie helpers",
+    "lesson": "Never set secure: process.env.NODE_ENV === \"production\" on cookies. The Docker deploy runs NODE_ENV=production over plain http://localhost, and Safari drops Secure cookies on http (even localhost), so login succeeds but every later call is 401. Use secure: process.env.COOKIE_SECURE === \"true\" (off by default) and list COOKIE_SECURE in .env.example.",
+    "confidence": 0.8,
+    "runs": [
+      "wheels2go-11011046"
+    ],
+    "status": "active",
+    "source": "operator",
+    "updatedAt": "2026-11-01T11:30:00.000Z"
+  },
+  {
+    "id": "dev-cookie-secure-opt-in",
+    "role": "dev",
+    "trigger": "When setting or changing cookies",
+    "lesson": "Don't tie the cookie Secure flag to NODE_ENV: the deployed container is production over plain http, and Safari then drops the cookie (login works, everything after is 401; Chrome on localhost hides the bug). Keep secure behind COOKIE_SECURE=true.",
+    "confidence": 0.8,
+    "runs": [
+      "wheels2go-11011046"
+    ],
+    "status": "active",
+    "source": "operator",
+    "updatedAt": "2026-11-01T11:30:00.000Z"
+  },
+  {
+    "id": "devops-smoke-login",
+    "role": "devops",
+    "trigger": "When proving a deploy with login",
+    "lesson": "After the container starts, prove a real session over http, not just /api/health: log in as a seeded user with curl -c jar, then curl -b jar /api/auth/me must be 200. A Secure cookie over http fails this check, and that's the bug Safari users hit.",
+    "confidence": 0.8,
+    "runs": [
+      "wheels2go-11011046"
+    ],
+    "status": "active",
+    "source": "operator",
+    "updatedAt": "2026-11-01T11:30:00.000Z"
   }
 ]

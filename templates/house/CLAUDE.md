@@ -37,6 +37,7 @@ This repo is built by a team of AI agents coordinated by the FORGE orchestrator.
 - Drizzle query builder only: never `sql.raw` or `${}` interpolation inside `sql```.
 - No `dangerouslySetInnerHTML`, `innerHTML =`, `eval` or `new Function`.
 - No secrets in the repo: read them from `process.env` and list them in `.env.example`.
+- Cookies: `secure: process.env.COOKIE_SECURE === "true"`, never `NODE_ENV === "production"`. The container runs production over plain http, where Safari drops Secure cookies and every request after login is 401.
 
 ## Commands
 - `npm run check`: typecheck + lint + unit tests (**must pass before you report DONE**)
