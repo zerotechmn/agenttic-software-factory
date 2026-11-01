@@ -449,6 +449,8 @@ describe("brief attachments and dependencies", () => {
     expect(matchesGlob("public/assets/sheet.png", ARCHITECT_GLOBS)).toBe(true);
     expect(matchesGlob("src/web/main.tsx", ARCHITECT_GLOBS)).toBe(true);
     expect(matchesGlob("vite.config.ts", ARCHITECT_GLOBS)).toBe(true);
+    expect(matchesGlob("src/web/lib/useAuth.ts", ARCHITECT_GLOBS)).toBe(true); // shared web helpers, like src/server/lib
+    expect(matchesGlob(".env.example", ARCHITECT_GLOBS)).toBe(true);
   });
 
   it("a dev's package request: the architect decides, approved ones land on main, the dev continues in its session", async () => {

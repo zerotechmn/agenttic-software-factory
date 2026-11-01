@@ -47,5 +47,5 @@ This repo is built by a team of AI agents coordinated by the FORGE orchestrator.
 ## Rules for every agent
 - Stay within the files your task allows. Never edit `docs/prd.json`, `docs/tasks.json`, `tests/acceptance/**` or `.forge/**`.
 - Never weaken `tsconfig.json`, `eslint.config.js`, `vitest.config.ts` or `playwright.config.ts` to make checks pass.
-- No new dependencies unless your task brief explicitly allows them.
+- Dependencies: only the Architect installs packages. A developer who needs one lists it in `packages` in the status JSON instead of running npm install; the Architect decides and the developer continues with the answer.
 - Don't commit, push or switch branches: the orchestrator handles git.

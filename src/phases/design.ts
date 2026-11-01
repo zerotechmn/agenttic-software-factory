@@ -11,7 +11,7 @@ import { matchesGlob } from "../guard.ts";
 
 export const ARCHITECT_GLOBS = [
   "docs/architecture.md", "docs/tasks.json", "src/shared/**", "src/server/db/**", "src/server/routes/**",
-  "package.json", "package-lock.json", "public/**", "src/web/main.tsx", "vite.config.ts", "src/server/app.ts", "src/web/pages/**", "src/web/components/**", "src/web/App.tsx", "src/server/lib/**", "tests/unit/**",
+  "package.json", "package-lock.json", "public/**", "src/web/main.tsx", "vite.config.ts", "src/server/app.ts", "src/web/pages/**", "src/web/components/**", "src/web/App.tsx", "src/server/lib/**", "src/web/lib/**", "src/web/hooks/**", ".env.example", "tests/unit/**",
 ];
 export const UIUX_GLOBS = ["docs/design.md", "src/web/theme.css", "src/web/components/ui/**", "index.html"];
 
