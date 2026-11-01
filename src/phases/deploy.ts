@@ -13,7 +13,10 @@ export async function deploy(ctx: Ctx): Promise<void> {
   const role = loadRole("devops");
   const image = `forge-${(ctx.dir.split("/").pop() ?? "app").toLowerCase().replace(/[^a-z0-9-]/g, "-")}`;
   const wanted = requestedPort(ctx.dir);
-  const port = wanted ?? (await freePort(DEPLOY_PORT));
+  // A redeploy (iterate/resume) replaces this run's own container on the same port, so the demo URL stays the same.
+  const own = wanted ? undefined : hostPort(sh(`docker ps --filter name=^${image}$ --format '{{.Ports}}'`, ctx.dir).out);
+  const port = wanted ?? own ?? (await freePort(DEPLOY_PORT));
+  if (own) ctx.ledger.note(`redeploy on port ${own}, where this run's app already runs`);
   if (wanted) {
     ctx.ledger.note(`deploy on port ${wanted}, as the brief asks`);
     // An earlier FORGE demo (forge-* container) holding the client's port is ours to stop; anything else is left alone.
@@ -41,6 +44,12 @@ export async function deploy(ctx: Ctx): Promise<void> {
   emit(ctx, { kind: "deploy", status: verified ? "ok" : "fail", text: verified ? url : report.notes.slice(0, 200) });
   if (!verified) ctx.ledger.ruling("finish without a running deploy", report.notes.slice(0, 200), "demo must use `npm run build && npm start`");
   commitMain(ctx, await commitMessage(ctx, "chore: deploy", "deploy files"), DEVOPS_GLOBS);
+}
+
+/** The host port in `docker ps` output like "0.0.0.0:8800->8787/tcp, [::]:8800->8787/tcp". */
+export function hostPort(dockerPorts: string): number | undefined {
+  const m = dockerPorts.match(/:(\d+)->8787\b/);
+  return m ? Number(m[1]) : undefined;
 }
 
 async function healthy(url: string): Promise<boolean> {

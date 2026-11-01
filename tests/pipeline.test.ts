@@ -302,6 +302,15 @@ describe("deploy", () => {
   });
 });
 
+describe("deploy port", () => {
+  it("reads this run's own container port from docker ps, so a redeploy keeps its URL", async () => {
+    const { hostPort } = await import("../src/phases/deploy.ts");
+    expect(hostPort("0.0.0.0:8801->8787/tcp, [::]:8801->8787/tcp")).toBe(8801);
+    expect(hostPort("")).toBeUndefined();
+    expect(hostPort("0.0.0.0:5432->5432/tcp")).toBeUndefined();
+  });
+});
+
 describe("main-branch integrity (review fixes)", () => {
   const mainOf = (r: { cwd: string }) => join(r.cwd, "..", "..", "..");
 
