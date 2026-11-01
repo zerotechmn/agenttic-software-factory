@@ -28,8 +28,15 @@ export const depsIO = {
     return `${v.out.trim().replace(/\s+/g, " ")}${dl.downloads !== undefined ? `, ${dl.downloads} downloads last week` : ""}`;
   },
   install(specs: string[], dir: string): { ok: boolean; out: string } {
-    const r = sh(`npm install --save-exact --no-audit --no-fund ${specs.join(" ")}`, dir, 300_000);
-    return { ok: r.code === 0, out: r.out };
+    // type packages are build-time only
+    const types = specs.filter((s) => s.startsWith("@types/"));
+    const runtime = specs.filter((s) => !types.includes(s));
+    for (const [list, flag] of [[runtime, ""], [types, " --save-dev"]] as const) {
+      if (!list.length) continue;
+      const r = sh(`npm install --save-exact${flag} --no-audit --no-fund ${list.join(" ")}`, dir, 300_000);
+      if (r.code !== 0) return { ok: false, out: r.out };
+    }
+    return { ok: true, out: "" };
   },
 };
 
