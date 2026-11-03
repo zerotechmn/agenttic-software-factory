@@ -119,7 +119,7 @@ Approve each task by creating a local, Git-ignored `.forge/routing-approved.json
 }
 ```
 
-`taskRevision` is exported from `src/routing.ts` and fingerprints `[title, description, lanes]` using JSON serialization. Changed tasks require renewed approval. Only the approved summary (maximum 1,000 characters) and static eligible-role descriptions leave the machine. No original task text, code, file paths, notes or artifacts are sent. Common credential patterns are redacted, but automatic redaction is not comprehensive: review summaries before approving them. Missing, malformed or stale approval skips the suggestion.
+`taskRevision` is exported from `src/routing.ts` and fingerprints `[title, description, lanes]` using JSON serialization. Changed tasks require renewed approval. Only the approved summary (maximum 1,000 characters) and static eligible-role descriptions leave the machine. No original task text, code, file paths, notes or artifacts are sent. Common credential patterns are redacted, but automatic redaction is not comprehensive: review summaries before approving them. Missing, malformed or stale approval skips the suggestion and logs a `routing_skipped` event, so the gap is visible. An invalid `FORGE_ROUTING_MODE` stops `forge run`/`forge resume` before any phase starts.
 
 The adapter uses the documented [Choice API](https://docs.typesafe.ai/primitives/choice), validates roles, probabilities and usage, times out after two seconds and never retries failures. At most three observations run concurrently, with at most 100 per build invocation; retries within that build are deduplicated. Pending observations drain on phase exit. Limits reset on a later build or resume. No confidence threshold is assumed or applied.
 

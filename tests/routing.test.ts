@@ -63,3 +63,10 @@ it('fails closed on missing and stale task approvals', async () => {
         rmSync(dir, { recursive: true, force: true });
     }
 });
+it('routing mode: unset is disabled, typos fail fast', async () => {
+    const { routingMode } = await import('../src/routing.ts');
+    expect(routingMode(undefined)).toBe('disabled');
+    expect(routingMode('')).toBe('disabled');
+    expect(routingMode('shadow')).toBe('shadow');
+    expect(() => routingMode('shadwo')).toThrow(/invalid FORGE_ROUTING_MODE: shadwo/);
+});
