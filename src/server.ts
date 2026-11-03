@@ -188,13 +188,30 @@ export function serveOffice(res: ServerResponse, pathname: string): boolean {
   return true;
 }
 
+/** Serve the standalone realm dashboard on the same origin as the FORGE API. */
+export function serveWorld(res: ServerResponse, pathname: string): boolean {
+  if (pathname !== "/world" && !pathname.startsWith("/world/")) return false;
+  const rel = pathname.replace(/^\/world\/?/, "") || "index.html";
+  if (rel.includes("..") || rel.includes("\\")) { res.writeHead(404).end(); return true; }
+  const file = join(FACTORY_ROOT, "world", "dist", rel);
+  if (!existsSync(file) || !statSync(file).isFile()) {
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    res.end("World UI not found. Build it with: npm run world:build");
+    return true;
+  }
+  const types: Record<string, string> = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".webp": "image/webp", ".png": "image/png", ".svg": "image/svg+xml", ".json": "application/json" };
+  res.writeHead(200, { "Content-Type": types[file.slice(file.lastIndexOf("."))] ?? "application/octet-stream" });
+  res.end(readFileSync(file));
+  return true;
+}
+
 /** SSE + JSON state + the monitor page. Works for a live run (bus) or a finished one (file replay). */
 export async function startServer(dir: string, bus: EventBus | null, port: number): Promise<{ url: string; close(): Promise<void> }> {
   const run = createRunHandler(dir, bus);
   const server = createServer((req, res) => {
     const pathname = new URL(req.url ?? "/", "http://x").pathname;
     if (run.handle(req, res, pathname)) return;
-    if (serveOffice(res, pathname)) return;
+    if (serveOffice(res, pathname) || serveWorld(res, pathname)) return;
     if (pathname === "/" || pathname === "/index.html") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       res.end(readFileSync(join(FACTORY_ROOT, "monitor", "index.html"), "utf8"));
