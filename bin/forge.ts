@@ -20,6 +20,7 @@ import { iterate } from "../src/iterate.ts";
 import { formatDoctor, runDoctor } from "../src/doctor.ts";
 import { reopenForRequests } from "../src/requests.ts";
 import { loadLessons, promotable, promote, saveLessons } from "../src/lessons.ts";
+import { routingMode } from "../src/routing.ts";
 
 const USAGE = `forge — autonomous software factory
 
@@ -123,7 +124,10 @@ async function execute(dir: string, briefPath: string, flags: Record<string, str
 }
 
 async function main() {
+  // The factory's own .env; values already in the shell win, including empty ones.
+  if (existsSync(join(FACTORY_ROOT, ".env"))) process.loadEnvFile(join(FACTORY_ROOT, ".env"));
   const [cmd, ...rest] = process.argv.slice(2);
+  if (cmd === "run" || cmd === "resume") routingMode();
   const { pos, flags } = parseArgs(rest);
   switch (cmd) {
     case "run": {

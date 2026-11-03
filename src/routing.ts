@@ -4,6 +4,12 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from 'zod';
 export type RoutingMode = 'disabled' | 'mock' | 'shadow';
+/** Read FORGE_ROUTING_MODE; unset means disabled. Throws on anything else so a typo fails at startup, not mid-run. */
+export function routingMode(value = process.env.FORGE_ROUTING_MODE): RoutingMode {
+    if (!value) return 'disabled';
+    if (value === 'disabled' || value === 'mock' || value === 'shadow') return value;
+    throw new Error(`invalid FORGE_ROUTING_MODE: ${value} (use disabled, mock or shadow)`);
+}
 export interface RoutingInput {
     summary: string;
     eligibleRoles: string[];

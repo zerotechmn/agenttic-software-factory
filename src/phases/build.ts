@@ -1,4 +1,4 @@
-import { approvedTaskSummary, RoutingObserver, routingProvider } from "../routing.ts";
+import { approvedTaskSummary, RoutingObserver, routingMode, routingProvider } from "../routing.ts";
 import { existsSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { caps, checkLanding, checkStop, commitMessage, emit, ensureMain, hooksFor, loadPrd, markMain, Stopped, stopFile, type Ctx } from "../ctx.ts";
@@ -36,9 +36,8 @@ class Mutex {
 
 /** Run the scheduler until every task is merged or parked. */
 export async function build(ctx: Ctx): Promise<void> {
-  const mode = process.env.FORGE_ROUTING_MODE;
-  if (mode && !["disabled", "mock", "shadow"].includes(mode)) throw new Error("invalid FORGE_ROUTING_MODE");
-  const observer = new RoutingObserver(routingProvider(mode === "shadow" || mode === "mock" ? mode : "disabled", {
+  const mode = routingMode();
+  const observer = new RoutingObserver(routingProvider(mode, {
     key: process.env.TYPESAFE_API_KEY, model: process.env.FORGE_ROUTING_MODEL,
   }), (taskId, decision) => emit(ctx, { kind: "routing_decision", taskId,
     text: `${decision.source === "simulated" ? "MOCK · simulated" : "SHADOW · external"}: suggested ${decision.suggestedRole ?? "unavailable"}; assigned dev; usage ${decision.usage ? JSON.stringify(decision.usage) : "unavailable"}${decision.error ? `; ${decision.error}` : ""}`, data: decision }));
@@ -68,8 +67,11 @@ export async function build(ctx: Ctx): Promise<void> {
       for (const t of readyTasks(ctx.state.tasks)) {
         if (running.size >= ctx.cfg.concurrency) break;
         if (running.has(t.id)) continue;
-        const summary = mode === "mock" || mode === "shadow" ? approvedTaskSummary(ctx.dir, t) : undefined;
-        if (summary) observer.observe(t.id, { summary, eligibleRoles: ["dev"], baselineRole: "dev" });
+        if (mode !== "disabled") {
+          const summary = approvedTaskSummary(ctx.dir, t);
+          if (summary) observer.observe(t.id, { summary, eligibleRoles: ["dev"], baselineRole: "dev" });
+          else emit(ctx, { kind: "routing_skipped", taskId: t.id, text: `routing skipped: no current approval for ${t.id} in .forge/routing-approved.json` });
+        }
         const p = runTask(ctx, t, mergeLock).finally(() => running.delete(t.id));
         running.set(t.id, p);
       }
