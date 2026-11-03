@@ -39,6 +39,7 @@ The finished app is served from Docker on the brief's port (8800), and `docs/RUN
 ./forge resume ~/forge-runs/<run>       # continue exactly where it stopped
 ./forge iterate ~/forge-runs/<run> "change" …   # operator change requests (override the PRD), then resume
 ./forge console                         # Office: every run, live or replayed; New job; Ask FORGE
+# World view: npm run world:build, then open http://127.0.0.1:4300/world/
 ./forge serve  ~/forge-runs/<run>       # the plain monitor for one run
 ./forge report ~/forge-runs/<run>       # print the run report
 ./forge lessons [promote <id>]          # cross-run lessons

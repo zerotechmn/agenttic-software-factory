@@ -109,12 +109,16 @@ export class Hud {
         <span class="speed"><button data-s="1" class="on">1×</button><button data-s="4">4×</button><button data-s="10">10×</button><button data-r>↺</button></span>
       </div>
       <div class="ticker"></div>
-      <div class="consolebar"><span class="run-slot"></span><span class="actions"><button data-a="prd">PRD</button><button data-a="tasks">Tasks</button><button data-a="vault">Docs</button><button data-a="replay" title="Replay this run from the start">▶ Replay</button><button data-a="sfx" title="Sound effects" aria-pressed="false">SFX</button><button data-a="music" title="Background music" aria-pressed="false">♪</button><button data-a="job">+ New job</button><button data-a="ask">Ask FORGE</button></span></div>
+      <div class="consolebar"><span class="run-slot"></span><span class="actions"><button data-a="world">World ↗</button><button data-a="prd">PRD</button><button data-a="tasks">Tasks</button><button data-a="vault">Docs</button><button data-a="replay" title="Replay this run from the start">▶ Replay</button><button data-a="sfx" title="Sound effects" aria-pressed="false">SFX</button><button data-a="music" title="Background music" aria-pressed="false">♪</button><button data-a="job">+ New job</button><button data-a="ask">Ask FORGE</button></span></div>
       <div class="notice demo">DEMO REPLAY · a recorded sample run, not your factory</div><div class="notice conn"></div>
       <div class="panel"><span class="x">✕</span><div class="body"></div></div>`;
     document.body.appendChild(this.el);
     this.el.querySelectorAll<HTMLButtonElement>(".speed button[data-s]").forEach((b) => b.addEventListener("click", () => this.setSpeedUi(Number(b.dataset.s))));
     this.q(".speed [data-r]").addEventListener("click", () => this.onRestart?.());
+    this.q(".actions [data-a=world]").addEventListener("click", () => {
+      const run = new URLSearchParams(location.search).get("run");
+      location.assign(`/world/${run ? `?run=${encodeURIComponent(run)}` : ""}`);
+    });
     this.q(".actions [data-a=job]").addEventListener("click", () => this.onNewJob?.());
     this.q(".actions [data-a=ask]").addEventListener("click", () => this.onAsk?.());
     this.q(".actions [data-a=prd]").addEventListener("click", () => this.onProduct?.());

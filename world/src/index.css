@@ -1,0 +1,17 @@
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font: 14px/1.45 ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #1d1b2e;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #efe8ff 0%, transparent 60%),
+    radial-gradient(900px 400px at 100% 0%, #fff0e1 0%, transparent 55%),
+    #fffaf3;
+  min-height: 100vh;
+}
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 3px solid #7c5cff; outline-offset: 2px; border-radius: 8px; }
+code, pre { font-family: ui-monospace, "SF Mono", Menlo, monospace; }

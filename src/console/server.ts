@@ -5,7 +5,7 @@ import { openSync } from "node:fs";
 import { join } from "node:path";
 import type { AddressInfo } from "node:net";
 import { FACTORY_ROOT } from "../config.ts";
-import { createRunHandler, serveOffice, type RunHandler } from "../server.ts";
+import { createRunHandler, serveOffice, serveWorld, type RunHandler } from "../server.ts";
 import { listRuns, runDir, runStatus, startRun, actions } from "./runs.ts";
 import { listProposals, resolveProposal } from "./assistant.ts";
 import type { ClaudeFeed } from "./claude.ts";
@@ -71,7 +71,7 @@ export async function startConsole(o: ConsoleOptions): Promise<{ url: string; cl
         res.writeHead(302, { Location: "/office/" }).end();
         return;
       }
-      if (serveOffice(res, p)) return;
+      if (serveOffice(res, p) || serveWorld(res, p)) return;
       if (p === "/api/runs" && req.method === "GET") return json(res, 200, listRuns(o.root).map(({ dir: _d, ...r }) => r));
       if (p === "/api/runs" && req.method === "POST") {
         const b = await readBody(req);

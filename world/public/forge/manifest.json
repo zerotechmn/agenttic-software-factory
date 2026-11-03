@@ -1,0 +1,287 @@
+{
+  "map.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 428
+  },
+  "map-836.webp": {
+    "width": 836,
+    "height": 471,
+    "kb": 158
+  },
+  "bg/product_steppe.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 291
+  },
+  "bg/research_grove.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 312
+  },
+  "bg/architecture_citadel.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 287
+  },
+  "bg/design_lake.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 281
+  },
+  "bg/developer_valley.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 258
+  },
+  "bg/review_keep.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 206
+  },
+  "bg/integrator_vault.webp": {
+    "width": 1672,
+    "height": 940,
+    "kb": 299
+  },
+  "bg/qa_lab.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 224
+  },
+  "bg/deploy_dock.webp": {
+    "width": 1672,
+    "height": 941,
+    "kb": 266
+  },
+  "char/erka.webp": {
+    "width": 192,
+    "height": 480,
+    "kb": 19
+  },
+  "card/erka.webp": {
+    "width": 360,
+    "height": 424,
+    "kb": 27
+  },
+  "home/erka.webp": {
+    "width": 560,
+    "height": 445,
+    "kb": 50
+  },
+  "char/danjila.webp": {
+    "width": 280,
+    "height": 480,
+    "kb": 28
+  },
+  "card/danjila.webp": {
+    "width": 360,
+    "height": 393,
+    "kb": 29
+  },
+  "home/danjila.webp": {
+    "width": 560,
+    "height": 372,
+    "kb": 61
+  },
+  "char/sunny_boy.webp": {
+    "width": 295,
+    "height": 480,
+    "kb": 32
+  },
+  "card/sunny_boy.webp": {
+    "width": 360,
+    "height": 421,
+    "kb": 33
+  },
+  "home/sunny_boy.webp": {
+    "width": 560,
+    "height": 449,
+    "kb": 56
+  },
+  "char/selenge.webp": {
+    "width": 264,
+    "height": 480,
+    "kb": 26
+  },
+  "card/selenge.webp": {
+    "width": 360,
+    "height": 459,
+    "kb": 32
+  },
+  "home/selenge.webp": {
+    "width": 560,
+    "height": 441,
+    "kb": 58
+  },
+  "char/tuvshu.webp": {
+    "width": 270,
+    "height": 480,
+    "kb": 24
+  },
+  "card/tuvshu.webp": {
+    "width": 360,
+    "height": 389,
+    "kb": 27
+  },
+  "home/tuvshu.webp": {
+    "width": 560,
+    "height": 374,
+    "kb": 48
+  },
+  "char/anar.webp": {
+    "width": 250,
+    "height": 480,
+    "kb": 24
+  },
+  "card/anar.webp": {
+    "width": 360,
+    "height": 424,
+    "kb": 28
+  },
+  "home/anar.webp": {
+    "width": 560,
+    "height": 402,
+    "kb": 52
+  },
+  "char/mada.webp": {
+    "width": 251,
+    "height": 480,
+    "kb": 24
+  },
+  "card/mada.webp": {
+    "width": 360,
+    "height": 449,
+    "kb": 28
+  },
+  "home/mada.webp": {
+    "width": 560,
+    "height": 403,
+    "kb": 50
+  },
+  "char/tuvshu_1.webp": {
+    "width": 265,
+    "height": 480,
+    "kb": 25
+  },
+  "card/tuvshu_1.webp": {
+    "width": 360,
+    "height": 408,
+    "kb": 28
+  },
+  "home/tuvshu_1.webp": {
+    "width": 560,
+    "height": 470,
+    "kb": 54
+  },
+  "char/enkee.webp": {
+    "width": 248,
+    "height": 480,
+    "kb": 26
+  },
+  "card/enkee.webp": {
+    "width": 360,
+    "height": 389,
+    "kb": 31
+  },
+  "home/enkee.webp": {
+    "width": 560,
+    "height": 463,
+    "kb": 52
+  },
+  "char/ginkhma.webp": {
+    "width": 277,
+    "height": 480,
+    "kb": 34
+  },
+  "card/ginkhma.webp": {
+    "width": 360,
+    "height": 410,
+    "kb": 38
+  },
+  "home/ginkhma.webp": {
+    "width": 560,
+    "height": 421,
+    "kb": 56
+  },
+  "char/duuree.webp": {
+    "width": 296,
+    "height": 480,
+    "kb": 30
+  },
+  "card/duuree.webp": {
+    "width": 360,
+    "height": 382,
+    "kb": 31
+  },
+  "home/duuree.webp": {
+    "width": 560,
+    "height": 505,
+    "kb": 64
+  },
+  "char/ops.webp": {
+    "width": 271,
+    "height": 480,
+    "kb": 28
+  },
+  "card/ops.webp": {
+    "width": 360,
+    "height": 434,
+    "kb": 29
+  },
+  "home/ops.webp": {
+    "width": 560,
+    "height": 519,
+    "kb": 59
+  },
+  "bubble/purple.webp": {
+    "width": 480,
+    "height": 206,
+    "kb": 9
+  },
+  "bubble/green.webp": {
+    "width": 480,
+    "height": 207,
+    "kb": 12
+  },
+  "bubble/blue.webp": {
+    "width": 480,
+    "height": 198,
+    "kb": 14
+  },
+  "bubble/orange.webp": {
+    "width": 480,
+    "height": 196,
+    "kb": 13
+  },
+  "bubble/red.webp": {
+    "width": 480,
+    "height": 232,
+    "kb": 13
+  },
+  "bubble/gold.webp": {
+    "width": 480,
+    "height": 228,
+    "kb": 18
+  },
+  "parcel/idle.webp": {
+    "width": 107,
+    "height": 160,
+    "kb": 9
+  },
+  "parcel/fly.webp": {
+    "width": 195,
+    "height": 160,
+    "kb": 12
+  },
+  "parcel/swirl.webp": {
+    "width": 192,
+    "height": 160,
+    "kb": 16
+  },
+  "parcel/arrive.webp": {
+    "width": 140,
+    "height": 160,
+    "kb": 13
+  }
+}
