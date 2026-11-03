@@ -1,0 +1,88 @@
+{
+  "sourceRun": "wheels2go-shadow-20261103-091012",
+  "mode": "edited video of actual UI screen captures from recorded-run console",
+  "syntheticEvents": false,
+  "syntheticDocuments": false,
+  "newAgentRun": false,
+  "kanban": "FORGE existing task board",
+  "captureMethod": "agent-browser screenshots; live recording rejected after visual inspection showed stale frames",
+  "chapters": [
+    {
+      "title": "FORGE Realm / recorded run",
+      "image": "01.png"
+    },
+    {
+      "title": "Agent / task and tool activity",
+      "image": "02.png"
+    },
+    {
+      "title": "FORGE Kanban / task status",
+      "image": "03.png"
+    },
+    {
+      "title": "Task / checks and history",
+      "image": "04.png"
+    },
+    {
+      "title": "Handoffs / agent to artifact",
+      "image": "05.png"
+    },
+    {
+      "title": "Timeline / phase progression",
+      "image": "06.png"
+    },
+    {
+      "title": "Product / PRD",
+      "image": "07.png"
+    },
+    {
+      "title": "Architect / architecture",
+      "image": "08.png"
+    },
+    {
+      "title": "UI-UX / design specification",
+      "image": "09.png"
+    },
+    {
+      "title": "Architect / task plan",
+      "image": "10.png"
+    },
+    {
+      "title": "Architect / shared contracts",
+      "image": "11.png"
+    },
+    {
+      "title": "QA / third round evidence",
+      "image": "12.png"
+    },
+    {
+      "title": "Final review / security findings",
+      "image": "13.png"
+    },
+    {
+      "title": "DevOps / deployment record",
+      "image": "14.png"
+    },
+    {
+      "title": "Reporting / run summary",
+      "image": "15.png"
+    },
+    {
+      "title": "Reporting / usage and autonomy",
+      "image": "16.png"
+    },
+    {
+      "title": "Learning / cross-run lessons",
+      "image": "17.png"
+    },
+    {
+      "title": "Orchestrator / decision ledger",
+      "image": "18.png"
+    },
+    {
+      "title": "Developer / activity and notes",
+      "image": "19.png"
+    }
+  ],
+  "captureDirectory": "assets/demo-captures"
+}
