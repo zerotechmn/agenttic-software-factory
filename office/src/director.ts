@@ -141,6 +141,9 @@ export class Director {
     const out: Command[] = [];
     this.nextIteration(e, out);
     switch (e.kind) {
+      case "routing_decision":
+        out.push({ type: "ticker", who: "Routing advice", text: e.text ?? "Suggestion unavailable", tone: "info" });
+        break;
       case "phase_start":
         if (this.clarifying && e.phase !== "product") out.push(...this.endClarify());
         if (e.phase === "design") out.push(this.scene("prd-design", "Product hands the finished PRD to the architect and the designer", ["product", "architect", "uiux"], this.lastSummary.get("product") ?? "The PRD is done"));

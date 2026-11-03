@@ -1,3 +1,4 @@
+import { approvedTaskSummary, RoutingObserver, routingProvider } from "../routing.ts";
 import { existsSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { caps, checkLanding, checkStop, commitMessage, emit, ensureMain, hooksFor, loadPrd, markMain, Stopped, stopFile, type Ctx } from "../ctx.ts";
@@ -35,6 +36,12 @@ class Mutex {
 
 /** Run the scheduler until every task is merged or parked. */
 export async function build(ctx: Ctx): Promise<void> {
+  const mode = process.env.FORGE_ROUTING_MODE;
+  if (mode && !["disabled", "mock", "shadow"].includes(mode)) throw new Error("invalid FORGE_ROUTING_MODE");
+  const observer = new RoutingObserver(routingProvider(mode === "shadow" || mode === "mock" ? mode : "disabled", {
+    key: process.env.TYPESAFE_API_KEY, model: process.env.FORGE_ROUTING_MODEL,
+  }), (taskId, decision) => emit(ctx, { kind: "routing_decision", taskId,
+    text: `${decision.source === "simulated" ? "MOCK · simulated" : "SHADOW · external"}: suggested ${decision.suggestedRole ?? "unavailable"}; assigned dev; usage ${decision.usage ? JSON.stringify(decision.usage) : "unavailable"}${decision.error ? `; ${decision.error}` : ""}`, data: decision }));
   const mergeLock = new Mutex();
   const running = new Map<string, Promise<void>>();
   // Tasks left "running" by a crashed run start over from a fresh worktree.
@@ -43,32 +50,36 @@ export async function build(ctx: Ctx): Promise<void> {
   ctx.state.failureSpread = {};
   ensureDeps(ctx);
 
-  for (;;) {
-    if (existsSync(stopFile(ctx.dir)) || ctx.state.systemicHalt) {
-      // Let in-flight tasks reach their own checkpoint so none is left half-merged or marked running.
-      await Promise.allSettled(running.values());
+  try {
+    for (;;) {
+      if (existsSync(stopFile(ctx.dir)) || ctx.state.systemicHalt) {
+        // Let in-flight tasks reach their own checkpoint so none is left half-merged or marked running.
+        await Promise.allSettled(running.values());
+        ctx.save();
+        throw new Stopped();
+      }
+      // operator backlog requests (office UI / POST /task) join the queue as they arrive
+      const fresh = takeRequests(ctx.dir, ctx.state);
+      if (fresh.length) ctx.ledger.note(`operator added ${fresh.length} task(s): ${fresh.map((t) => `${t.id} ${t.title}`).join("; ")}`);
+      if (checkLanding(ctx)) parkNonMust(ctx, running);
+      if (ctx.budget.exhausted()) {
+        for (const t of ctx.state.tasks) if (!running.has(t.id) && !["merged", "parked"].includes(t.status)) park(ctx, t, "budget exhausted");
+      }
+      for (const t of readyTasks(ctx.state.tasks)) {
+        if (running.size >= ctx.cfg.concurrency) break;
+        if (running.has(t.id)) continue;
+        const summary = mode === "mock" || mode === "shadow" ? approvedTaskSummary(ctx.dir, t) : undefined;
+        if (summary) observer.observe(t.id, { summary, eligibleRoles: ["dev"], baselineRole: "dev" });
+        const p = runTask(ctx, t, mergeLock).finally(() => running.delete(t.id));
+        running.set(t.id, p);
+      }
+      if (running.size === 0) break;
+      await Promise.race(running.values()).catch(() => undefined);
       ctx.save();
-      throw new Stopped();
     }
-    // operator backlog requests (office UI / POST /task) join the queue as they arrive
-    const fresh = takeRequests(ctx.dir, ctx.state);
-    if (fresh.length) ctx.ledger.note(`operator added ${fresh.length} task(s): ${fresh.map((t) => `${t.id} ${t.title}`).join("; ")}`);
-    if (checkLanding(ctx)) parkNonMust(ctx, running);
-    if (ctx.budget.exhausted()) {
-      for (const t of ctx.state.tasks) if (!running.has(t.id) && !["merged", "parked"].includes(t.status)) park(ctx, t, "budget exhausted");
-    }
-    for (const t of readyTasks(ctx.state.tasks)) {
-      if (running.size >= ctx.cfg.concurrency) break;
-      if (running.has(t.id)) continue;
-      const p = runTask(ctx, t, mergeLock).finally(() => running.delete(t.id));
-      running.set(t.id, p);
-    }
-    if (running.size === 0) break;
-    await Promise.race(running.values()).catch(() => undefined);
+    for (const t of ctx.state.tasks) if (!["merged", "parked"].includes(t.status)) park(ctx, t, "unreachable: its dependencies never completed");
     ctx.save();
-  }
-  for (const t of ctx.state.tasks) if (!["merged", "parked"].includes(t.status)) park(ctx, t, "unreachable: its dependencies never completed");
-  ctx.save();
+  } finally { await observer.flush(); }
 }
 
 function park(ctx: Ctx, t: Task, why: string): void {

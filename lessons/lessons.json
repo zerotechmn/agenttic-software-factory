@@ -69,13 +69,14 @@
     "role": "dev",
     "trigger": "When a lint or config error outside your lanes blocks the gate",
     "lesson": "Report it as a concern; don't edit eslint, tsconfig or vite configs that are not in your lanes.",
-    "confidence": 0.5,
+    "confidence": 0.65,
     "runs": [
-      "ab-base"
+      "ab-base",
+      "wheels2go-20261102-162122-mvyzpdag"
     ],
     "status": "active",
     "source": "seed",
-    "updatedAt": "2026-10-20T00:00:00.000Z"
+    "updatedAt": "2026-11-02T08:41:58.641Z"
   },
   {
     "id": "dev-paths-inside-worktree",
@@ -108,11 +109,12 @@
       "test-mvt6wkfs",
       "habit-tracker-mvul3sxq",
       "test-run-official-mvuzipp0",
-      "wheels2go-11010804-mvxjnnhl"
+      "wheels2go-11010804-mvxjnnhl",
+      "wheels2go-20261102-162122-mvyzpdag"
     ],
     "status": "active",
     "source": "learned",
-    "updatedAt": "2026-11-01T08:32:41.702Z"
+    "updatedAt": "2026-11-02T08:41:58.641Z"
   },
   {
     "id": "dev-git-only-own-worktree",
@@ -189,13 +191,14 @@
     "role": "dev",
     "trigger": "when a Bash command is denied by the guard as outside your working directory",
     "lesson": "Do not retry or probe a ../ path that the guard denied as outside your working directory; use only files inside your worktree and report any missing shared file as a concern.",
-    "confidence": 0.3,
+    "confidence": 0.45,
     "runs": [
-      "test-run-official-mvuzipp0"
+      "test-run-official-mvuzipp0",
+      "wheels2go-20261102-162122-mvyzpdag"
     ],
     "status": "candidate",
     "source": "learned",
-    "updatedAt": "2026-10-31T08:02:16.369Z"
+    "updatedAt": "2026-11-02T08:41:58.641Z"
   },
   {
     "id": "qa-no-pinned-class-tests",
@@ -315,5 +318,18 @@
     "status": "active",
     "source": "operator",
     "updatedAt": "2026-11-01T11:30:00.000Z"
+  },
+  {
+    "id": "architect-own-shell-file",
+    "role": "architect",
+    "trigger": "when planning task lanes from docs/design.md or the brief and UI tasks run in parallel",
+    "lesson": "Assign every file the design or brief requires, such as the app shell in src/web/App.tsx, to a named task before the UI tasks start, so no required wiring is left unowned.",
+    "confidence": 0.3,
+    "runs": [
+      "wheels2go-20261102-162122-mvyzpdag"
+    ],
+    "status": "candidate",
+    "source": "learned",
+    "updatedAt": "2026-11-02T08:41:58.641Z"
   }
 ]

@@ -14,6 +14,7 @@ const CSS = `
 #hud .run-picker-phase,#hud .run-picker-cost{font:20px VT323,monospace}
 #hud .run-picker-phase{color:var(--muted,#7a6a50)}
 #hud .run-dot{display:inline-block;width:8px;height:8px;background:var(--good,#3a9a4a);animation:blink 1s steps(2) infinite}
+#hud .run-picker-app{font:9px "Press Start 2P",monospace;color:var(--good,#3a9a4a)}
 #hud .run-picker-pad{display:inline-block;width:8px;height:8px}
 `;
 
@@ -76,6 +77,18 @@ export class RunPicker implements RunPickerApi {
       c.className = "run-picker-cost";
       c.textContent = cost(r);
       li.append(dot, name, phase, c);
+      if (r.deployUrl) {
+        const a = document.createElement("a");
+        a.className = "run-picker-app";
+        a.setAttribute("data-testid", "run-app-link");
+        a.href = r.deployUrl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        const u = new URL(r.deployUrl);
+        a.textContent = `APP ${u.port ? `:${u.port}` : u.host} ↗`;
+        a.addEventListener("click", (e) => e.stopPropagation());
+        li.appendChild(a);
+      }
       li.addEventListener("click", () => {
         close();
         switchRun(r.name);

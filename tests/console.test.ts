@@ -32,6 +32,19 @@ describe("console runs", () => {
     expect(runs[1]).toMatchObject({ phase: "done", product: "alpha app", usd: 3.2 });
   });
 
+  it("exposes deployUrl only for a verified deployment", () => {
+    const root = fakeRoot();
+    const deploy = (name: string, rec: object) => writeFileSync(join(root, name, ".forge", "deploy.json"), JSON.stringify(rec));
+    deploy("alpha", { ok: true, url: "http://localhost:8800", verified: true });
+    deploy("beta", { ok: true, url: "http://localhost:8801", verified: false });
+    const runs = listRuns(root);
+    expect(runs.find((r) => r.name === "alpha")!.deployUrl).toBe("http://localhost:8800");
+    expect(runs.find((r) => r.name === "beta")!.deployUrl).toBeUndefined();
+    deploy("beta", { url: "javascript:alert(1)", verified: true });
+    expect(listRuns(root).find((r) => r.name === "beta")!.deployUrl).toBeUndefined();
+    expect(listRuns(fakeRoot()).every((r) => r.deployUrl === undefined)).toBe(true);
+  });
+
   it("starts a run from a brief: writes the brief and spawns forge with the right args", () => {
     const root = fakeRoot();
     const calls: string[][] = [];

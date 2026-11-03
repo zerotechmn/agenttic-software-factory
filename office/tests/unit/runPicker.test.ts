@@ -50,4 +50,19 @@ describe("RunPicker", () => {
     slot.querySelectorAll<HTMLElement>("[role=option]")[1].click();
     expect(spy).toHaveBeenCalledWith(expect.stringContaining("?run=my%20blog"));
   });
+
+  it("shows the verified deploy link only for runs that have one; clicking it does not switch runs", () => {
+    const spy = vi.spyOn(nav, "assign").mockImplementation(() => {});
+    const slot = document.createElement("div");
+    document.body.appendChild(slot);
+    new RunPicker().render(slot, [{ ...runs[1], deployUrl: "http://localhost:8800" }, runs[0]], "todo");
+    const links = slot.querySelectorAll<HTMLAnchorElement>("[data-testid=run-app-link]");
+    expect(links.length).toBe(1);
+    expect(links[0].textContent).toBe("APP :8800 ↗");
+    expect(links[0].getAttribute("href")).toBe("http://localhost:8800");
+    expect(links[0].target).toBe("_blank");
+    expect(links[0].rel).toBe("noopener noreferrer");
+    links[0].click();
+    expect(spy).not.toHaveBeenCalled();
+  });
 });

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "2d41081c-cc2a-4480-b41e-130eb3022582",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/tuvshinjargalanar/zero/agentic-software-factory/.archify/architecture-forge-factory-20261102-134300/candidate.json",
+  "output": "/Users/tuvshinjargalanar/zero/agentic-software-factory/.archify/architecture-forge-factory-20261102-134300/forge-factory.html",
+  "specification": {
+    "sha256": "0f263f43bed8c8a93eeca6e12d4164bfa9f154dd5189221550c00a6b956a5205",
+    "bytes": 7505
+  },
+  "artifact": {
+    "sha256": "6bda7e6f94b8e107d260f95355836af8c9d8294896e5a0376e66ab4df3f80d33",
+    "bytes": 779629
+  }
+}

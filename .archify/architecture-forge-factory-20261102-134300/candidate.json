@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FORGE Factory Architecture",
+    "locale": "en",
+    "output": ".archify/architecture-forge-factory-20261102-134300/forge-factory.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Tuvshuu12/agentic-software-factory.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "91ea1e94379ece58543baeb56a60584705702b4f"
+    }
+  },
+  "components": [
+    { "id": "operator", "type": "external", "icon": "person", "label": "Operator", "sublabel": "terminal / browser", "pos": [40, 200], "size": [130, 64],
+      "sources": [{ "path": "README.md", "line": 22, "end_line": 23, "label": "console + run" }] },
+    { "id": "cli", "type": "backend", "label": "forge CLI", "sublabel": "bin/forge.ts", "pos": [280, 200], "size": [130, 64], "tag": "STOP on SIGINT",
+      "sources": [{ "path": "bin/forge.ts", "line": 85, "end_line": 123, "label": "execute()" }, { "path": "forge", "line": 1, "end_line": 9, "label": "launcher + .env" }] },
+    { "id": "pipeline", "type": "backend", "label": "Pipeline", "sublabel": "src/pipeline.ts", "pos": [520, 200], "size": [130, 64], "tag": "skips done phases",
+      "sources": [{ "path": "src/pipeline.ts", "line": 33, "end_line": 67, "label": "runPipeline" }, { "path": "src/types.ts", "line": 5, "end_line": 7, "label": "PHASES order" }] },
+    { "id": "phases", "type": "backend", "label": "Phase runners", "sublabel": "src/phases/*", "pos": [760, 200], "size": [130, 64], "tag": "intake → report",
+      "sources": [{ "path": "src/pipeline.ts", "line": 19, "end_line": 30, "label": "RUNNERS map" }, { "path": "src/phases/build.ts", "line": 96, "end_line": 100, "label": "task worktree" }, { "path": "src/phases/qa.ts", "line": 60, "end_line": 77, "label": "QA round" }] },
+    { "id": "runner", "type": "backend", "label": "SDK agent runner", "sublabel": "src/agent.ts", "pos": [1000, 200], "size": [130, 64], "tag": "no Agent/Task tool",
+      "sources": [{ "path": "src/agent.ts", "line": 200, "end_line": 220, "label": "SDK options" }] },
+    { "id": "claude", "type": "external", "label": "Claude Agent SDK", "sublabel": "Anthropic API", "pos": [1240, 200], "size": [130, 64],
+      "sources": [{ "path": "src/agent.ts", "line": 259, "label": "queryFn() call" }] },
+    { "id": "repo", "type": "database", "label": "Project repo", "sublabel": "main + .forge/wt/<id>", "pos": [760, 50], "size": [130, 64], "tag": "only orchestrator merges",
+      "sources": [{ "path": "src/ctx.ts", "line": 116, "end_line": 139, "label": "commitMain / ensureMain" }, { "path": "src/phases/build.ts", "line": 282, "end_line": 316, "label": "merge + main gate" }, { "path": "src/phases/intake.ts", "line": 10, "end_line": 16, "label": "template copy" }] },
+    { "id": "office", "type": "frontend", "label": "Office UI", "sublabel": "PixiJS · office/", "pos": [40, 360], "size": [130, 64],
+      "sources": [{ "path": "office/src/feed.ts", "line": 46, "end_line": 64, "label": "SSE / replay" }] },
+    { "id": "handler", "type": "backend", "label": "Run HTTP handler", "sublabel": "src/server.ts", "pos": [280, 360], "size": [130, 64], "tag": "/events /state /say /task",
+      "sources": [{ "path": "src/server.ts", "line": 192, "end_line": 214, "label": "startServer" }, { "path": "src/server.ts", "line": 19, "label": "createRunHandler" }] },
+    { "id": "store", "type": "database", "label": "Run state", "sublabel": ".forge/ files", "pos": [520, 360], "size": [130, 64], "tag": "state · events · ledger",
+      "sources": [{ "path": "src/state.ts", "line": 27, "end_line": 33, "label": "atomic state.json" }, { "path": "src/events.ts", "line": 14, "end_line": 25, "label": "events.jsonl" }, { "path": "src/ledger.ts", "line": 11, "end_line": 27, "label": "ledger.md" }] },
+    { "id": "gate", "type": "backend", "label": "Gate", "sublabel": "typecheck·lint·test", "pos": [760, 360], "size": [130, 64], "tag": "failure signature",
+      "sources": [{ "path": "src/checks.ts", "line": 52, "end_line": 70, "label": "runGate" }] },
+    { "id": "guard", "type": "security", "label": "Write guard", "sublabel": "src/guard.ts", "pos": [1000, 360], "size": [130, 64], "tag": "deny + revert",
+      "sources": [{ "path": "src/guard.ts", "line": 175, "end_line": 204, "label": "PreToolUse deny" }, { "path": "src/phases/build.ts", "line": 208, "end_line": 214, "label": "restore protected" }] },
+    { "id": "console", "type": "backend", "label": "Console server", "sublabel": "src/console/ :4300", "pos": [280, 510], "size": [130, 64], "tag": "spawns ./forge",
+      "sources": [{ "path": "src/console/server.ts", "line": 54, "end_line": 60, "label": "startConsole" }, { "path": "src/console/server.ts", "line": 122, "end_line": 126, "label": "run proxy" }, { "path": "src/console/server.ts", "line": 26, "end_line": 33, "label": "defaultSpawn" }] }
+  ],
+  "connections": [
+    { "id": "op-cli", "from": "operator", "to": "cli", "label": "forge run", "variant": "emphasis" },
+    { "id": "cli-pipeline", "from": "cli", "to": "pipeline", "label": "runPipeline", "variant": "emphasis" },
+    { "id": "pipeline-phases", "from": "pipeline", "to": "phases", "label": "per phase", "variant": "emphasis" },
+    { "id": "phases-runner", "from": "phases", "to": "runner", "label": "runner.run()", "variant": "emphasis" },
+    { "id": "runner-claude", "from": "runner", "to": "claude", "label": "query()", "variant": "emphasis" },
+    { "id": "claude-repo", "from": "claude", "to": "repo", "label": "agent tools edit cwd", "variant": "dashed", "fromSide": "top", "toSide": "right" },
+    { "id": "phases-repo", "from": "phases", "to": "repo", "label": "merge · commitMain", "fromSide": "top", "toSide": "bottom" },
+    { "id": "phases-gate", "from": "phases", "to": "gate", "label": "ctx.gate()", "fromSide": "bottom", "toSide": "top" },
+    { "id": "runner-guard", "from": "runner", "to": "guard", "label": "PreToolUse hook", "variant": "security", "fromSide": "bottom", "toSide": "top" },
+    { "id": "pipeline-store", "from": "pipeline", "to": "store", "label": "saveState · emit", "fromSide": "bottom", "toSide": "top" },
+    { "id": "cli-handler", "from": "cli", "to": "handler", "label": "startServer :4317", "fromSide": "bottom", "toSide": "top" },
+    { "id": "handler-store", "from": "handler", "to": "store", "label": "SSE replay" },
+    { "id": "op-office", "from": "operator", "to": "office", "label": "browser", "fromSide": "bottom", "toSide": "top" },
+    { "id": "office-console", "from": "office", "to": "console", "label": "/api · SSE ?run=", "fromSide": "bottom", "toSide": "left" },
+    { "id": "console-handler", "from": "console", "to": "handler", "label": "proxy ?run=", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Run loop", "items": ["10 phases in fixed order; each finished phase is pushed to state.done so resume skips it", "QA and final review call build() again for fix tasks", "Stopped (STOP file) ends a run cleanly; other errors emit run_error"] },
+    { "dot": "rose", "title": "Write safety", "items": ["Guard denies writes outside a role's lanes before the tool runs", "Protected files are restored from the merge-base before each dev commit", "commitMain reverts out-of-scope changes; ensureMain resets main to mainSha"] },
+    { "dot": "amber", "title": "Ports", "items": ["4300 console · 4317 run monitor", "8790 app under QA · 8800 Docker deploy"] }
+  ]
+}

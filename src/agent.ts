@@ -218,7 +218,7 @@ export class SdkAgentRunner implements AgentRunner {
       ...(req.schema ? { outputFormat: { type: "json_schema", schema: jsonSchema(req.schema) } } : {}),
       ...(req.resume ? { resume: req.resume } : {}),
       ...(req.extraDirs?.length ? { additionalDirectories: req.extraDirs } : {}),
-      env: { ...process.env, ...(req.env ?? {}) },
+      env: { ...process.env, ...(req.env ?? {}), TYPESAFE_API_KEY: undefined },
     };
 
     let final: Extract<SDKMessage, { type: "result" }> | undefined;

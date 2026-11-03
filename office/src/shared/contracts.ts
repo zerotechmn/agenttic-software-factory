@@ -22,7 +22,7 @@ export const API_PATHS = {
 // ---- entities / request / response bodies ---------------------------------------------------------
 
 /** One row of GET /api/runs (newest first). */
-export interface RunSummary { name: string; run: string; phase: string; usd: number; budget: number; product: string; startedAt: number | string; active: boolean }
+export interface RunSummary { name: string; run: string; phase: string; usd: number; budget: number; product: string; startedAt: number | string; active: boolean; deployUrl?: string }
 /** POST /api/runs body. `name` omitted when blank. budget > 0. → 201 {name} | 400 {error}. */
 export interface NewRunRequest { name?: string; brief: string; budget: number }
 export interface NewRunResponse { name: string }

@@ -106,3 +106,23 @@ Generated project layout: see `templates/house/CLAUDE.md`.
 
 `npm test` runs 221 factory tests; `cd office && npm test && npm run e2e` runs the Office's unit and Playwright suites. The pipeline tests run the whole state machine with a scripted fake runner, so they use zero tokens.
 `scripts/verify-template.sh` proves the house template is green: check, build, Playwright e2e and Docker build.
+
+## Experimental owner routing
+
+Disabled by default. Set `FORGE_ROUTING_MODE=mock` for deterministic **simulated** suggestions or `shadow` for **external** TypeSafe suggestions. Both leave the existing `dev` assignment authoritative. Shadow requires server-only `TYPESAFE_API_KEY` and `FORGE_ROUTING_MODEL=jev-1.14.0`. The launcher reads `.env`; exported shell values take precedence, including empty values. Never use Vite-prefixed credential variables or commit keys.
+
+Approve each task by creating a local, Git-ignored `.forge/routing-approved.json` in the generated run directory:
+
+```json
+{
+  "T1": { "revision": "<taskRevision(task) SHA-256>", "summary": "Implement a calculator unit test." }
+}
+```
+
+`taskRevision` is exported from `src/routing.ts` and fingerprints `[title, description, lanes]` using JSON serialization. Changed tasks require renewed approval. Only the approved summary (maximum 1,000 characters) and static eligible-role descriptions leave the machine. No original task text, code, file paths, notes or artifacts are sent. Common credential patterns are redacted, but automatic redaction is not comprehensive: review summaries before approving them. Missing, malformed or stale approval skips the suggestion.
+
+The adapter uses the documented [Choice API](https://docs.typesafe.ai/primitives/choice), validates roles, probabilities and usage, times out after two seconds and never retries failures. At most three observations run concurrently, with at most 100 per build invocation; retries within that build are deduplicated. Pending observations drain on phase exit. Limits reset on a later build or resume. No confidence threshold is assumed or applied.
+
+Events use `kind: routing_decision`, `taskId`, a labeled `text` field and typed `data`: `source` (simulated/external), `assignedRole`, `suggestedRole`, `assignmentChanged: false`, `model`, `latencyMs`, `confidence`, `probabilities`, `usage` or `null`, and a sanitized error code. The Office displays an advisory ticker only; suggestions never move workers or alter execution. Actual usage is shown only when returned; otherwise it is unavailable. No cost estimate is fabricated. Events are stored in `.forge/events.jsonl`; summaries, credentials and raw provider error bodies are excluded. Retention follows the run directory: delete experiment runs after evaluation. Provider retention guarantees have not been verified.
+
+Run `npm run typecheck`, `npm test -- tests/routing.test.ts`, and `cd office && npm run check && npm run build`. There is no root or Office lint script. Tests use local fake HTTP responses, not inference calls. Mock and disabled modes need no key. A synthetic live request was successfully verified with `jev-1.14.0`; this does not prove a full factory run. The live hook offers only the currently executable `dev` role, so cross-role improvement must be evaluated separately with an offline labeled dataset through the provider interface. Broader assignment, cross-resume deduplication, cooldown scheduling and automatic retention remain outside this minimal integration.

@@ -18,6 +18,8 @@ export interface RunSummary {
   product?: string;
   startedAt: number;
   active: boolean;
+  /** Deployed app URL, only when .forge/deploy.json says verified. */
+  deployUrl?: string;
 }
 
 /** Resolve a run name inside the runs root; never outside it. */
@@ -53,7 +55,14 @@ export function listRuns(root: string): RunSummary[] {
     } catch {
       // PRD not written yet
     }
-    out.push({ name, dir, run: s.run, phase: s.phase, usd: s.spend.usd, budget: loadConfig(dir).budgetUsd, product, startedAt: s.startedAt, active: alive(dir) });
+    let deployUrl: string | undefined;
+    try {
+      const d = JSON.parse(readFileSync(join(dir, ".forge", "deploy.json"), "utf8"));
+      if (d.verified === true && typeof d.url === "string" && /^https?:\/\//.test(d.url)) deployUrl = d.url;
+    } catch {
+      // not deployed yet
+    }
+    out.push({ name, dir, run: s.run, phase: s.phase, usd: s.spend.usd, budget: loadConfig(dir).budgetUsd, product, startedAt: s.startedAt, active: alive(dir), deployUrl });
   }
   return out.sort((a, b) => b.startedAt - a.startedAt);
 }

@@ -86,3 +86,8 @@ describe("internal tools", () => {
     expect(d.handle(ev({ kind: "tool", role: "dev", text: "StructuredOutput" }))).toEqual([]);
   });
 });
+
+it('routing advice creates only a ticker, never worker actions', () => {
+ const commands = new Director().handle(ev({kind:'routing_decision',text:'MOCK · simulated: suggested qa; assigned dev'}));
+ expect(commands).toEqual([{type:'ticker',who:'Routing advice',text:'MOCK · simulated: suggested qa; assigned dev',tone:'info'}]);
+});
